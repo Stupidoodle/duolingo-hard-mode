@@ -28,6 +28,7 @@ function enforceTyping(){
 	try{
 		challengeDiv.setAttribute("data-extension-processed", "true");
 		activeChallenge = ChallengeFactory.create(challengeType, challengeDiv);
+		console.debug(`Creating challenge ${challengeType}`);
 		activeChallenge.enforceTyping();
 	}
 	catch(error){
