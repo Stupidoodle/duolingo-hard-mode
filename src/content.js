@@ -8,17 +8,27 @@ import{
 
 ChallengeFactory.register("translate", ChallengeTranslate);
 
+let activeChallenge = null;
+
 function enforceTyping(){
 	const challengeDiv = document.querySelector("div[data-test^='challenge challenge-']")
 
-	if(!challengeDiv)
+	if(activeChallenge && (!challengeDiv || challengeDiv !== activeChallenge.challengeDiv)){
+		activeChallenge.cleanup?.();
+		activeChallenge = null;
+	}
+
+	if(!challengeDiv || challengeDiv.hasAttribute("data-extension-processed")) {
 		return;
+	}
 
 	const challengeType = challengeDiv.getAttribute("data-test").replace("challenge challenge-", "")
 	console.debug(challengeType)
 
 	try{
-		const challengeInstance = ChallengeFactory.create(challengeType, challengeDiv);
+		challengeDiv.setAttribute("data-extension-processed", "true");
+		activeChallenge = ChallengeFactory.create(challengeType, challengeDiv);
+		activeChallenge.enforceTyping();
 	}
 	catch(error){
 		console.error(error.message)
