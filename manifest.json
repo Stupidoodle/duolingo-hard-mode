@@ -6,12 +6,7 @@
 	"content_scripts": [
 		{
 			"matches": ["*://*.duolingo.com/lesson/*"],
-			"js": [
-				"src/content.js",
-				"src/Challenge.js",
-				"src/ChallengeFactory.js",
-				"src/ChallengeTranslate.js"
-			]
+			"js": ["dist/content.bundle.js"]
 		}
 	],
 	"permissions": [
