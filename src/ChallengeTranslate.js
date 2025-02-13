@@ -59,7 +59,7 @@ export class ChallengeTranslate extends Challenge{
 	 * @override
 	 */
 	enforceTyping(){
-		if(Object.keys(this.elements.choices.length) > 0){
+		if(Object.keys(this.elements.choices).length > 0){
 			console.debug(`Enforcing typing for ${this.challengeType}`);
 			this.injectTypingInput();
 		}
@@ -432,7 +432,20 @@ export class ChallengeTranslate extends Challenge{
 
 		const usedWords = new Set();
 
+		["keydown", "keypress", "input", "keyup"].forEach(eventType => {
+			document.addEventListener(eventType, (event) => {
+				if (event.target.closest("textarea[data-extension]")) {
+					if (event.key === " " || event.key === "Enter") {
+						event.preventDefault();  // Block space & enter but allow normal typing
+					}
+					event.stopPropagation();
+					event.stopImmediatePropagation();
+				}
+			}, true);
+		});
+
 		textarea.addEventListener("keydown", (event) => {
+			console.debug(`Keydown: ${event.key}`);
 			if(event.key === " "){
 				event.preventDefault();
 
@@ -483,6 +496,8 @@ export class ChallengeTranslate extends Challenge{
 				this.handleSubmit();
 			}
 		});
+
+		textarea.addEventListener("blur", () => setTimeout(() => textarea.focus(), 50));
 
 		textarea.focus();
 
