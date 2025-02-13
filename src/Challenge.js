@@ -26,6 +26,14 @@ export class Challenge{
 	 * TODO
 	 * @abstract
 	 */
+	cleanup(){
+		throw new Error("Method not implemented");
+	}
+
+	/**
+	 * TODO
+	 * @abstract
+	 */
 	extractChoices(wordBankDiv){
 		throw new Error("Method not implemented");
 	}

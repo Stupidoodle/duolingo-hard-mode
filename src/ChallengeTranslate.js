@@ -76,6 +76,7 @@ export class ChallengeTranslate extends Challenge{
 			return console.error("Word bank not found");
 
 		wordBank.style.display = "none";
+		this.elements.wordBank = wordBank;
 
 		const textarea = document.createElement("textarea");
 		textarea.setAttribute("autocapitalize", "off");
@@ -493,5 +494,17 @@ export class ChallengeTranslate extends Challenge{
 	 */
 	handleSubmit() {
 		this.elements.submitButton.click();
+	}
+
+	/**
+	 * Cleans up the challenge
+	 * @override
+	 */
+	cleanup(){
+		if(this.elements?.inputField){
+			this.elements.inputField.remove();
+			this.elements.inputField = null;
+			this.elements.wordBank.style.display = "flex";
+		}
 	}
 }
