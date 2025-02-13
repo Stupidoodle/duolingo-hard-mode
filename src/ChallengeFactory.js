@@ -1,6 +1,6 @@
 import {
 	Challenge
-} from "./Challenge";
+} from "./Challenge.js";
 
 /**
  * Factory class for creating challenges
