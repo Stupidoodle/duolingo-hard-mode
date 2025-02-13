@@ -4,29 +4,28 @@ import{
 
 import{
 	ExtensionEventManager
-} from "./ExtensionEventManager.js"
+} from "./ExtensionEventManager.js";
 
 /**
- * Challenge type: translate
+ * Challenge type: tapComplete
  * @extends Challenge
  */
-export class ChallengeTranslate extends Challenge{
-	remainingChoices = {};
+export class ChallengeTapComplete extends Challenge{
 	/**
-	 * Instantiates a new ChallengeTranslate
-	 * @param {HTMLElement} challengeDiv - Challenge div
-	 * @param {ExtensionEventManager} eventManager - Event manager
+	 * @param {HTMLElement} challengeDiv
+	 * @param {ExtensionEventManager} eventManager
 	 * @throws {Error} If challengeDiv is not found
 	 */
 	constructor(challengeDiv, eventManager){
 		super(challengeDiv);
 
-		// hash a unique id for this challenge
 		this.challengeId = this.challengeType + "-" + Date.now();
-		this.eventManager = eventManager
 
-		this.elements = this.extractElements()
-		this.remainingChoices = {...this.elements.choices};
+		/** @type {ExtensionEventManager} */
+		this.eventManager = eventManager;
+
+		/** @type {Object} */
+		this.elements = this.extractElements();
 		console.debug(this.elements);
 		this.eventManager.registerChallenge(this.challengeId, this);
 	}
@@ -475,50 +474,19 @@ export class ChallengeTranslate extends Challenge{
 	handleKeyEvent(event){
 		const key = event.key;
 
-		if(key === " "){
-			this.handleSpace();
+		let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase();
+
+		if(userInput in this.elements.choices){
+			console.debug(`Selected ${userInput}`);
+
+			this.elements.choices[userInput].click();
 		}
-		else if(key === "Backspace"){
+
+		if(key === "Backspace"){
 			this.handleBackspace();
 		}
 		else if(key === "Enter"){
-			let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase()
-			if(userInput && userInput in this.remainingChoices){
-				console.debug(`Selected ${userInput}`);
-
-				this.remainingChoices[userInput].click();
-				delete this.remainingChoices[userInput];
-			}
 			this.handleSubmit();
-		}
-	}
-
-	/**
-	 * Handles space key event
-	 */
-	handleSpace(){
-		let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase();
-		if(!userInput)
-			return;
-
-		if(userInput in this.remainingChoices){
-			console.debug(`Selected ${userInput}`);
-
-			this.remainingChoices[userInput].click();
-			delete this.remainingChoices[userInput];
-
-			this.elements.inputField.value += " ";
-		}
-		else{
-			console.warn(`Word ${userInput} not found in choices ${Object.keys(this.elements.choices)} or already used ${Array.from(this.remainingChoices)}`);
-
-			this.elements.inputField.style.border = "2px solid red";
-			this.elements.inputField.style.animation = "shake 0.3s";
-
-			setTimeout(() => {
-				this.elements.inputField.style.border = "2px solid rgb(var(--color-swan))";
-				this.elements.inputField.style.animation = "";
-			}, 300);
 		}
 	}
 
@@ -529,33 +497,23 @@ export class ChallengeTranslate extends Challenge{
 		const inputField = this.elements.inputField;
 		let text = inputField.value;
 
-		if (text.length === 0) {
-			return;
-		}
+		if (text.length === 0) return;
 
 		inputField.value = text.slice(0, -1);
 
+		const word = text.trim().split(/\s+/).pop().toLowerCase();
 		const words = inputField.value.trim().split(/\s+/);
 
-		let removedWord = null;
-		for (const word in this.elements.choices) {
-			if (!(words.includes(word)) && !(word in this.remainingChoices)) {
-				removedWord = word;
-				break;
-			}
-		}
+		if (!words.includes(word)) {
+			if (word in this.elements.choices) {
+				console.debug(`Removed ${word}`);
+				const dataTestValue = this.elements.choices[word].getAttribute("data-test");
+				const activeButton = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
+					.find(btn => btn.getAttribute("aria-disabled") === "false");
 
-		if (removedWord) {
-			console.debug(`Re-enabling ${removedWord}`);
-			this.remainingChoices[removedWord] = this.elements.choices[removedWord]; // Re-add to available choices
-
-			// Click the button to make the word available again
-			const dataTestValue = this.elements.choices[removedWord].getAttribute("data-test");
-			const activeButton = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
-				.find(btn => btn.getAttribute("aria-disabled") === "false");
-
-			if (activeButton) {
-				activeButton.click();
+				if (activeButton) {
+					activeButton.click();
+				}
 			}
 		}
 	}

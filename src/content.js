@@ -7,6 +7,10 @@ import{
 } from "./ChallengeTranslate.js";
 
 import{
+	ChallengeTapComplete
+} from "./ChallengeTapComplete.js";
+
+import{
 	ExtensionEventManager
 } from "./ExtensionEventManager.js";
 
@@ -14,6 +18,7 @@ const eventManager = new ExtensionEventManager();
 eventManager.initGlobalKeyCapture();
 
 ChallengeFactory.register("translate", ChallengeTranslate);
+ChallengeFactory.register("tapComplete", ChallengeTapComplete);
 
 let activeChallenge = null;
 
@@ -31,7 +36,7 @@ function enforceTyping(){
 
 	const challengeType = challengeDiv.getAttribute("data-test").replace("challenge challenge-", "")
 
-	if(["listenTap"].includes(challengeType)){
+	if(["listenTap", "completeReverseTranslation"].includes(challengeType)){
 		return;
 	}
 
