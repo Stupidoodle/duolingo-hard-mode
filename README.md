@@ -4,6 +4,7 @@ A Chrome extension that replaces multiple-choice questions in Duolingo lessons w
 
 Before:
 ![Before](https://i.imgur.com/bUjLt49.png)
+
 After:
 ![After](https://i.imgur.com/bal7LYR.gif)
 ## Features
