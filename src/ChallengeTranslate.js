@@ -445,6 +445,22 @@ export class ChallengeTranslate extends Challenge{
 
 		wordBank.parentNode.insertBefore(this.elements.inputField, wordBank);
 
+		this.elements.inputField.addEventListener('input', (e) => {
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+		});
+
+		this.elements.inputField.addEventListener('keydown', (e) => {
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+
+			// Handle special keys through our system
+			if([' ', 'Backspace', 'Enter'].includes(e.key)) {
+				e.preventDefault();
+				this.handleKeyEvent(e);
+			}
+		});
+
 		this.elements.inputField.addEventListener("blur", () => setTimeout(() => this.elements.inputField.focus(), 50));
 
 		this.elements.inputField.focus();
@@ -463,6 +479,13 @@ export class ChallengeTranslate extends Challenge{
 			this.handleBackspace();
 		}
 		else if(key === "Enter"){
+			let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase()
+			if(userInput && userInput in this.elements.choices && !this.usedWords.has(userInput)){
+				console.debug(`Selected ${userInput}`);
+
+				this.elements.choices[userInput].click();
+				this.usedWords.add(userInput);
+			}
 			this.handleSubmit();
 		}
 	}
@@ -486,7 +509,7 @@ export class ChallengeTranslate extends Challenge{
 			this.elements.inputField.value += " ";
 		}
 		else{
-			console.warn("Word not found.");
+			console.warn(`Word ${userInput} not found in choices ${Object.keys(this.elements.choices)} or already used ${Array.from(this.usedWords)}`);
 
 			this.elements.inputField.style.border = "2px solid red";
 			this.elements.inputField.style.animation = "shake 0.3s";
@@ -501,25 +524,34 @@ export class ChallengeTranslate extends Challenge{
 	/**
 	 * Handles backspace key event
 	 */
-	handleBackspace(){
-		const words = this.elements.inputField.value.trim().split(" ");
-		const lastUsedWord = words.pop();
-		if(!lastUsedWord)
-			return;
+	handleBackspace() {
+		const inputField = this.elements.inputField;
+		let text = inputField.value;
 
-		this.usedWords.delete(lastUsedWord);
+		if (text.length === 0) return;
 
-		if(lastUsedWord in this.elements.choices){
-			console.debug(`Removed ${lastUsedWord}`);
-			const dataTestValue = this.elements.choices[lastUsedWord].getAttribute("data-test");
-			const activeButton = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
-				.find(btn => btn.getAttribute("aria-disabled") === "false");
+		inputField.value = text.slice(0, -1);
 
-			if(activeButton){
-				activeButton.click();
+		const words = inputField.value.trim().split(/\s+/);
+
+		for (const word of this.usedWords) {
+			if (!words.includes(word)) {
+				this.usedWords.delete(word);
+
+				if (word in this.elements.choices) {
+					console.debug(`Removed ${word}`);
+					const dataTestValue = this.elements.choices[word].getAttribute("data-test");
+					const activeButton = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
+						.find(btn => btn.getAttribute("aria-disabled") === "false");
+
+					if (activeButton) {
+						activeButton.click();
+					}
+				}
 			}
 		}
 	}
+
 
 	/**
 	 * Submits the challenge

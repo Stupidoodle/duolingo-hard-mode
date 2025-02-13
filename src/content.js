@@ -30,6 +30,11 @@ function enforceTyping(){
 	}
 
 	const challengeType = challengeDiv.getAttribute("data-test").replace("challenge challenge-", "")
+
+	if(["listenTap"].includes(challengeType)){
+		return;
+	}
+
 	console.debug(challengeType)
 
 	try{

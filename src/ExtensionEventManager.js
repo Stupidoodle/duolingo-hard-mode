@@ -10,21 +10,32 @@ export class ExtensionEventManager{
 				return;
 			}
 
-			event.preventDefault();
 			event.stopPropagation();
 			event.stopImmediatePropagation();
 
-			const challengeId = textarea.dataset.challengeId;
-			const challenge = this.activeChallenges.get(challengeId);
+			console.log(event.key);
 
-			if(!challenge){
-				return;
+			if([' ', 'Backspace', 'Enter'].includes(event.key)) {
+				event.preventDefault();
+				const challengeId = textarea.dataset.challengeId;
+				const challenge = this.activeChallenges.get(challengeId);
+				challenge?.handleKeyEvent(event);
 			}
+		}, true);
 
-			challenge.handleKeyEvent(event);
-		},
-			true
-		);
+		document.addEventListener('keypress', (e) => {
+			if(e.target.closest("textarea[data-extension='true']")) {
+				e.stopPropagation();
+				e.stopImmediatePropagation();
+			}
+		}, true);
+
+		document.addEventListener('input', (e) => {
+			if(e.target.closest("textarea[data-extension='true']")) {
+				e.stopPropagation();
+				e.stopImmediatePropagation();
+			}
+		}, true);
 	}
 
 	registerChallenge(challengeId, challengeInstance){
