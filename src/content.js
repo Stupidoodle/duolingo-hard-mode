@@ -1,10 +1,17 @@
 import{
 	ChallengeFactory,
-} from "./ChallengeFactory"
+} from "./ChallengeFactory.js"
 
 import{
 	ChallengeTranslate
-} from "./ChallengeTranslate";
+} from "./ChallengeTranslate.js";
+
+import{
+	ExtensionEventManager
+} from "./ExtensionEventManager.js";
+
+const eventManager = new ExtensionEventManager();
+eventManager.initGlobalKeyCapture();
 
 ChallengeFactory.register("translate", ChallengeTranslate);
 
@@ -27,7 +34,7 @@ function enforceTyping(){
 
 	try{
 		challengeDiv.setAttribute("data-extension-processed", "true");
-		activeChallenge = ChallengeFactory.create(challengeType, challengeDiv);
+		activeChallenge = ChallengeFactory.create(challengeType, challengeDiv, eventManager);
 		console.debug(`Creating challenge ${challengeType}`);
 		activeChallenge.enforceTyping();
 	}

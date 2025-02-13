@@ -26,14 +26,15 @@ export class ChallengeFactory{
 	 * Creates an instance of a Challenge
 	 * @param {String} challengeType
 	 * @param {HTMLElement} challengeDiv
+	 * @param {ExtensionEventManager} eventManager
 	 * @returns {Challenge}
 	 * @throws {Error} If challengeType is not registered
 	 */
-	static create(challengeType, challengeDiv){
+	static create(challengeType, challengeDiv, eventManager){
 		const ChallengeClass = ChallengeFactory.registry.get(challengeType);
 		if(!ChallengeClass) {
 			throw new Error(`Challenge type ${challengeType} not found`);
 		}
-		return new ChallengeClass(challengeDiv);
+		return new ChallengeClass(challengeDiv, eventManager);
 	}
 }

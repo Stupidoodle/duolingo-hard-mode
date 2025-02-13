@@ -2,21 +2,32 @@ import{
 	Challenge
 } from "./Challenge.js";
 
+import{
+	ExtensionEventManager
+} from "./ExtensionEventManager.js"
+
 /**
  * Challenge type: Translate
  * @extends Challenge
  */
 export class ChallengeTranslate extends Challenge{
+	usedWords = new Set();
 	/**
 	 * Instantiates a new ChallengeTranslate
 	 * @param {HTMLElement} challengeDiv - Challenge div
+	 * @param {ExtensionEventManager} eventManager - Event manager
 	 * @throws {Error} If challengeDiv is not found
 	 */
-	constructor(challengeDiv){
+	constructor(challengeDiv, eventManager){
 		super(challengeDiv);
+
+		// hash a unique id for this challenge
+		this.challengeId = this.challengeType + "-" + Date.now();
+		this.eventManager = eventManager
 
 		this.elements = this.extractElements()
 		console.debug(this.elements);
+		this.eventManager.registerChallenge(this.challengeId, this);
 	}
 
 	/**
@@ -43,14 +54,16 @@ export class ChallengeTranslate extends Challenge{
 	/**
 	 * Extracts challenge-specific elements
 	 * @override
-	 * @returns {{question: (string|string), choices: {}, submitButton: HTMLButtonElement}} Object containing challenge-specific elements
+	 * @returns {{question: (string|string), choices: {}, submitButton: HTMLButtonElement, inputField: HTMLTextAreaElement, wordBank: HTMLElement}} Object containing challenge-specific elements
 	 */
 	extractElements(){
 		// noinspection JSValidateTypes
 		return {
 			question: this.challengeDiv.querySelector("h1[data-test='challenge-header']")?.textContent.trim() || "",
 			choices: this.extractChoices(this.challengeDiv.querySelector("div[data-test='word-bank']")) || {},
-			submitButton: document.querySelector('button[data-test="player-next"]')
+			submitButton: document.querySelector('button[data-test="player-next"]'),
+			inputField: null,
+			wordBank: null
 		};
 	}
 
@@ -79,13 +92,15 @@ export class ChallengeTranslate extends Challenge{
 		wordBank.style.display = "none";
 		this.elements.wordBank = wordBank;
 
-		const textarea = document.createElement("textarea");
-		textarea.setAttribute("autocapitalize", "off");
-		textarea.setAttribute("autocomplete", "off");
-		textarea.setAttribute("spellcheck", "false");
-		textarea.setAttribute("placeholder", "Type here...");
-		textarea.setAttribute("data-extension", "true");
-		textarea.style.cssText = `
+		this.elements.inputField = document.createElement("textarea");
+		this.elements.inputField.dataset.extension = "true";
+		this.elements.inputField.dataset.challengeId = this.challengeId;
+		this.elements.inputField.setAttribute("autocapitalize", "off");
+		this.elements.inputField.setAttribute("autocomplete", "off");
+		this.elements.inputField.setAttribute("spellcheck", "false");
+		this.elements.inputField.setAttribute("placeholder", "Type here...");
+		this.elements.inputField.setAttribute("data-extension", "true");
+		this.elements.inputField.style.cssText = `
 		-webkit-text-size-adjust: 100%;
 		--viewport-height: 100dvh;
 		--web-ui_button-border-radius: 16px;
@@ -428,80 +443,82 @@ export class ChallengeTranslate extends Challenge{
 		resize: none;
 		`
 
-		wordBank.parentNode.insertBefore(textarea, wordBank);
+		wordBank.parentNode.insertBefore(this.elements.inputField, wordBank);
 
-		const usedWords = new Set();
+		this.elements.inputField.addEventListener("blur", () => setTimeout(() => this.elements.inputField.focus(), 50));
 
-		["keydown", "keypress", "input", "keyup"].forEach(eventType => {
-			document.addEventListener(eventType, (event) => {
-				if (event.target.closest("textarea[data-extension]")) {
-					if (event.key === " " || event.key === "Enter") {
-						event.preventDefault();  // Block space & enter but allow normal typing
-					}
-					event.stopPropagation();
-					event.stopImmediatePropagation();
-				}
-			}, true);
-		});
+		this.elements.inputField.focus();
+	}
 
-		textarea.addEventListener("keydown", (event) => {
-			console.debug(`Keydown: ${event.key}`);
-			if(event.key === " "){
-				event.preventDefault();
+	/**
+	 * Handles key events
+	 */
+	handleKeyEvent(event){
+		const key = event.key;
 
-				let userInput = textarea.value.trim().split(" ").pop().toLowerCase();
-				if(!userInput)
-					return;
+		if(key === " "){
+			this.handleSpace();
+		}
+		else if(key === "Backspace"){
+			this.handleBackspace();
+		}
+		else if(key === "Enter"){
+			this.handleSubmit();
+		}
+	}
 
-				if(userInput in this.elements.choices && !usedWords.has(userInput)){
-					console.debug(`Selected ${userInput}`);
+	/**
+	 * Handles space key event
+	 */
+	handleSpace(){
+		//event.preventDefault();
 
-					this.elements.choices[userInput].click();
-					usedWords.add(userInput);
+		let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase();
+		if(!userInput)
+			return;
 
-					textarea.value += " ";
-				}
-				else{
-					console.warn("Word not found.");
+		if(userInput in this.elements.choices && !this.usedWords.has(userInput)){
+			console.debug(`Selected ${userInput}`);
 
-					textarea.style.border = "2px solid red";
-					textarea.style.animation = "shake 0.3s";
+			this.elements.choices[userInput].click();
+			this.usedWords.add(userInput);
 
-					setTimeout(() => {
-						textarea.style.border = "2px solid rgb(var(--color-swan))";
-						textarea.style.animation = "";
-					}, 300);
-				}
+			this.elements.inputField.value += " ";
+		}
+		else{
+			console.warn("Word not found.");
+
+			this.elements.inputField.style.border = "2px solid red";
+			this.elements.inputField.style.animation = "shake 0.3s";
+
+			setTimeout(() => {
+				this.elements.inputField.style.border = "2px solid rgb(var(--color-swan))";
+				this.elements.inputField.style.animation = "";
+			}, 300);
+		}
+	}
+
+	/**
+	 * Handles backspace key event
+	 */
+	handleBackspace(){
+		const words = this.elements.inputField.value.trim().split(" ");
+		const lastUsedWord = words.pop();
+		if(!lastUsedWord)
+			return;
+
+		this.usedWords.delete(lastUsedWord);
+
+		if(lastUsedWord in this.elements.choices){
+			console.debug(`Removed ${lastUsedWord}`);
+			const dataTestValue = this.elements.choices[lastUsedWord].getAttribute("data-test");
+			const activeButton = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
+				.find(btn => btn.getAttribute("aria-disabled") === "false");
+
+			if(activeButton){
+				activeButton.click();
 			}
-			else if(event.key === "Backspace"){
-				const words = textarea.value.trim().split(" ");
-				const lastUsedWord = words.pop();
-				if(!lastUsedWord)
-					return;
-
-				usedWords.delete(lastUsedWord);
-
-				if(lastUsedWord in this.elements.choices){
-					console.debug(`Removed ${lastUsedWord}`);
-					const dataTestValue = this.elements.choices[lastUsedWord].getAttribute("data-test");
-					const activeButton = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
-						.find(btn => btn.getAttribute("aria-disabled") === "false");
-
-					if(activeButton){
-						activeButton.click();
-					}
-				}
-			}
-			else if(event.key === "Enter"){
-				this.handleSubmit();
-			}
-		});
-
-		textarea.addEventListener("blur", () => setTimeout(() => textarea.focus(), 50));
-
-		textarea.focus();
-
-		this.elements.inputField = textarea;
+		}
 	}
 
 	/**
@@ -517,6 +534,7 @@ export class ChallengeTranslate extends Challenge{
 	 * @override
 	 */
 	cleanup(){
+		this.eventManager.unregisterChallenge(this.challengeId);
 		if(this.elements?.inputField){
 			this.elements.inputField.remove();
 			this.elements.inputField = null;
