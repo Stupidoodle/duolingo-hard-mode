@@ -6,6 +6,8 @@ import{
 	ChallengeTranslate
 } from "./ChallengeTranslate";
 
+ChallengeFactory.register("translate", ChallengeTranslate);
+
 function enforceTyping(){
 	const challengeDiv = document.querySelector("div[data-test^='challenge challenge-']")
 
@@ -25,7 +27,5 @@ function enforceTyping(){
 
 const observer = new MutationObserver(enforceTyping);
 observer.observe(document.body, {childList: true, subtree: true});
-
-ChallengeFactory.register("translate", ChallengeTranslate);
 
 enforceTyping();
