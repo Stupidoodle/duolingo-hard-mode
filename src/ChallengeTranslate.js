@@ -16,6 +16,7 @@ export class ChallengeTranslate extends Challenge{
 		super(challengeDiv);
 
 		this.elements = this.extractElements()
+		console.debug(this.elements);
 	}
 
 	/**
@@ -58,7 +59,7 @@ export class ChallengeTranslate extends Challenge{
 	 * @override
 	 */
 	enforceTyping(){
-		if(this.elements.choices.length > 0){
+		if(Object.keys(this.elements.choices.length) > 0){
 			console.debug(`Enforcing typing for ${this.challengeType}`);
 			this.injectTypingInput();
 		}
