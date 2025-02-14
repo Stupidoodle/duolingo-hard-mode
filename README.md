@@ -25,15 +25,15 @@ After:
 
 ## Known Issues ⚠️
 
-- **Fill-in-the-blank challenges** with multiple choices can be buggy
-- Some challenge types might become impossible to complete
-- Occasional UI glitches when switching between questions
-- Keyboard navigation quirks in specific scenarios
+- ~~**Fill-in-the-blank challenges** with multiple choices can be buggy~~
+- (Some challenge types might become impossible to complete)
+- (Occasional UI glitches when switching between questions)
+- (Keyboard navigation quirks in specific scenarios)
 
 ## Future Plans 🚧
 
 - Add hard mode support for ALL challenge types
-- Improve stability for fill-in-the-blank exercises
+- (Improve stability for fill-in-the-blank exercises)
 - Add answer validation hints
 - Implement smart autocomplete prevention
 - Add typing statistics and error tracking
