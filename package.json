@@ -1,6 +1,6 @@
 {
 	"name": "duolingo-hard-mode",
-	"version": "0.2.1",
+	"version": "0.4.0",
 	"description": "",
 	"main": "webpack.config.js",
 	"scripts": {
@@ -12,5 +12,8 @@
 		"type": "git",
 		"url": "https://github.com/Stupidoodle/duolingo-hard-mode.git"
 	},
-	"private": true
+	"private": true,
+	"devDependencies": {
+		"standard-version": "^9.5.0"
+	}
 }
