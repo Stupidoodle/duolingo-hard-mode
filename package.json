@@ -8,7 +8,7 @@
 		"build": "webpack --config webpack.prod.js",
 		"build:dev": "webpack --config webpack.dev.js",
 		"watch": "webpack --watch --config webpack.dev.js",
-		"test": "jest --watchAll"
+		"test": "jest"
 	},
 	"repository": {
 		"type": "git",
