@@ -3,7 +3,7 @@ name: Release Automation
 on:
   push:
     branches:
-      - main
+      - master
     tags:
       - 'v*.*.*'
     workflow_dispatch:
@@ -30,4 +30,4 @@ jobs:
 
       - name: Push Release Commit and Tag
         run: |
-          git push --follow-tags origin main
+          git push --follow-tags origin master
