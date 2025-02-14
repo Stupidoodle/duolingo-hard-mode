@@ -6,12 +6,17 @@ import{
 	ExtensionEventManager
 } from "./ExtensionEventManager.js"
 
+import{
+	WordBank
+} from "./WordBank.js";
+
 /**
  * Challenge type: translate
  * @extends Challenge
  */
 export class ChallengeTranslate extends Challenge{
-	remainingChoices = {};
+	/** @type {WordBank | null} */
+	remainingChoices = null;
 	/**
 	 * Instantiates a new ChallengeTranslate
 	 * @param {HTMLElement} challengeDiv - Challenge div
@@ -26,45 +31,28 @@ export class ChallengeTranslate extends Challenge{
 		this.eventManager = eventManager
 
 		this.elements = this.extractElements()
-		this.remainingChoices = {...this.elements.choices};
+
+		this.wordBank = new WordBank(this.challengeDiv.querySelector("div[data-test='word-bank']"));
+
+		this.remainingChoices = new WordBank(this.challengeDiv.querySelector("div[data-test='word-bank']"));
+
 		console.debug(this.elements);
+		console.debug(this.wordBank);
 		this.eventManager.registerChallenge(this.challengeId, this);
-	}
-
-	/**
-	 * Extracts choices mapped to the corresponding buttons from the word bank
-	 * TODO: Implement button class
-	 * @override
-	 * @param {HTMLElement} wordBankDiv
-	 * @returns {Object} Object containing choices mapped to the corresponding buttons
-	 * @throws {Error} If word bank is not found
-	 */
-	extractChoices(wordBankDiv) {
-		if(!wordBankDiv)
-			throw new Error("Word bank not found");
-
-		const wordButtons = [...wordBankDiv.querySelectorAll("button[data-test*='challenge-tap-token']")];
-
-		return wordButtons.reduce((dict, btn) => {
-			const word = btn.querySelector("[data-test='challenge-tap-token-text']").textContent.trim().toLowerCase();
-			dict[word] = btn;
-			return dict;
-		}, {});
 	}
 
 	/**
 	 * Extracts challenge-specific elements
 	 * @override
-	 * @returns {{question: (string|string), choices: {}, submitButton: HTMLButtonElement, inputField: HTMLTextAreaElement, wordBank: HTMLElement}} Object containing challenge-specific elements
+	 * @returns {{question: (string), submitButton: HTMLButtonElement, inputField: HTMLTextAreaElement, wordBank: HTMLElement}} Object containing challenge-specific elements
 	 */
 	extractElements(){
 		// noinspection JSValidateTypes
 		return {
 			question: this.challengeDiv.querySelector("h1[data-test='challenge-header']")?.textContent.trim() || "",
-			choices: this.extractChoices(this.challengeDiv.querySelector("div[data-test='word-bank']")) || {},
 			submitButton: document.querySelector('button[data-test="player-next"]'),
 			inputField: null,
-			wordBank: null
+			wordBank: this.challengeDiv.querySelector("div[data-test='word-bank']")
 		};
 	}
 
@@ -73,7 +61,7 @@ export class ChallengeTranslate extends Challenge{
 	 * @override
 	 */
 	enforceTyping(){
-		if(Object.keys(this.elements.choices).length > 0){
+		if(this.wordBank.wordMap.size > 0){
 			console.debug(`Enforcing typing for ${this.challengeType}`);
 			this.injectTypingInput();
 		}
@@ -85,13 +73,10 @@ export class ChallengeTranslate extends Challenge{
 	 * @throws {Error} FIXME If word bank is not found
 	 */
 	injectTypingInput(){
-		const wordBank = this.challengeDiv.querySelector("div[data-test='word-bank']");
-
-		if(!wordBank)
+		if(!this.elements.wordBank || !this.wordBank)
 			return console.error("Word bank not found");
 
-		wordBank.style.display = "none";
-		this.elements.wordBank = wordBank;
+		this.elements.wordBank.style.display = "none";
 
 		this.elements.inputField = document.createElement("textarea");
 		this.elements.inputField.dataset.extension = "true";
@@ -444,7 +429,7 @@ export class ChallengeTranslate extends Challenge{
 		resize: none;
 		`
 
-		wordBank.parentNode.insertBefore(this.elements.inputField, wordBank);
+		this.elements.wordBank.parentNode.insertBefore(this.elements.inputField, this.elements.wordBank);
 
 		this.elements.inputField.addEventListener('input', (e) => {
 			e.stopPropagation();
@@ -483,11 +468,14 @@ export class ChallengeTranslate extends Challenge{
 		}
 		else if(key === "Enter"){
 			let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase()
-			if(userInput && userInput in this.remainingChoices){
+
+			if(
+				this.remainingChoices.wordMap.has(userInput) &&
+				this.remainingChoices.wordMap.get(userInput).length > 0
+			){
 				console.debug(`Selected ${userInput}`);
 
-				this.remainingChoices[userInput].click();
-				delete this.remainingChoices[userInput];
+				this.remainingChoices.selectWord(userInput).click();
 			}
 			this.handleSubmit();
 		}
@@ -498,19 +486,22 @@ export class ChallengeTranslate extends Challenge{
 	 */
 	handleSpace(){
 		let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase();
+
 		if(!userInput)
 			return;
 
-		if(userInput in this.remainingChoices){
+		if(
+			this.remainingChoices.wordMap.has(userInput) &&
+			this.remainingChoices.wordMap.get(userInput).length > 0
+		){
 			console.debug(`Selected ${userInput}`);
 
-			this.remainingChoices[userInput].click();
-			delete this.remainingChoices[userInput];
+			this.remainingChoices.selectWord(userInput).click();
 
 			this.elements.inputField.value += " ";
 		}
 		else{
-			console.warn(`Word ${userInput} not found in choices ${Object.keys(this.elements.choices)} or already used ${Array.from(this.remainingChoices)}`);
+			console.warn(`Word ${userInput} not found in choices ${Array.from(this.remainingChoices.wordMap.keys())}`);
 
 			this.elements.inputField.style.border = "2px solid red";
 			this.elements.inputField.style.animation = "shake 0.3s";
@@ -525,36 +516,44 @@ export class ChallengeTranslate extends Challenge{
 	/**
 	 * Handles backspace key event
 	 */
-	handleBackspace() {
+	handleBackspace(){
 		const inputField = this.elements.inputField;
 		let text = inputField.value;
 
-		if (text.length === 0) {
+		if(text.length === 0){
 			return;
 		}
 
 		inputField.value = text.slice(0, -1);
 
-		const words = inputField.value.trim().split(/\s+/);
+		let words = inputField.value.trim().split(/\s+/);
+
+		if(text.endsWith(" ") && words.length > 0){
+			words.pop();
+		}
 
 		let removedWord = null;
-		for (const word in this.elements.choices) {
-			if (!(words.includes(word)) && !(word in this.remainingChoices)) {
+		for(const word of this.wordBank.wordMap.keys()){
+			if (
+				!(words.includes(word)) &&
+				this.remainingChoices.wordMap.get(word).length !==
+				this.wordBank.wordMap.get(word).length
+			){
 				removedWord = word;
 				break;
 			}
 		}
 
-		if (removedWord) {
+		if(removedWord){
 			console.debug(`Re-enabling ${removedWord}`);
-			this.remainingChoices[removedWord] = this.elements.choices[removedWord]; // Re-add to available choices
 
-			// Click the button to make the word available again
-			const dataTestValue = this.elements.choices[removedWord].getAttribute("data-test");
+			const returnedButton = this.remainingChoices.returnLastUsed(removedWord);
+			// Click the only enabled button to make the word available again
+			const dataTestValue = returnedButton.getAttribute("data-test");
 			const activeButton = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
 				.find(btn => btn.getAttribute("aria-disabled") === "false");
 
-			if (activeButton) {
+			if(activeButton){
 				activeButton.click();
 			}
 		}

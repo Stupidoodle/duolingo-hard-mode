@@ -31,14 +31,6 @@ export class Challenge{
 	}
 
 	/**
-	 * TODO
-	 * @abstract
-	 */
-	extractChoices(wordBankDiv){
-		throw new Error("Method not implemented");
-	}
-
-	/**
 	 * Extracts challenge-specific elements
 	 * Subclasses MUST override this method
 	 * @abstract
