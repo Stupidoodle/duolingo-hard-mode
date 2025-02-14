@@ -3,10 +3,12 @@
 	"version": "0.4.0",
 	"description": "",
 	"main": "webpack.config.js",
+	"type": "commonjs",
 	"scripts": {
 		"build": "webpack --config webpack.prod.js",
 		"build:dev": "webpack --config webpack.dev.js",
-		"watch": "webpack --watch --config webpack.dev.js"
+		"watch": "webpack --watch --config webpack.dev.js",
+		"test": "jest --watchAll"
 	},
 	"repository": {
 		"type": "git",
@@ -14,6 +16,14 @@
 	},
 	"private": true,
 	"devDependencies": {
+		"@babel/core": "^7.26.9",
+		"@babel/preset-env": "^7.26.9",
+		"@types/jest": "^29.5.14",
+		"babel-jest": "^29.7.0",
+		"eslint": "^9.20.1",
+		"globals": "^15.15.0",
+		"jest": "^29.7.0",
+		"jest-environment-jsdom": "^29.7.0",
 		"standard-version": "^9.5.0"
 	}
 }
