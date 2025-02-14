@@ -11,9 +11,9 @@ Addresses #456
 2. Test case 2
 
 ## Screenshots
-Before | After
----|---
-<img src="" width="300"> | <img src="" width="300">
+| Before                   | After                    |
+|--------------------------|--------------------------|
+| <img src="" width="300"> | <img src="" width="300"> |
 
 ---
 ✅ Check all that apply:
@@ -21,3 +21,8 @@ Before | After
 - [ ] Tests added
 - [ ] No breaking changes
 - [ ] ESLint passes
+
+## Versioning Changes
+- [ ] Patch (bug fixes)
+- [ ] Minor (new feature)
+- [ ] Major (breaking change)
