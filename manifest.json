@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "Duolingo Hard Mode",
-	"version": "0.1.2",
+	"version": "0.2.1",
 	"description": "Replaces multiple-choice questions in Duolingo with typing input.",
 	"content_scripts": [
 		{
