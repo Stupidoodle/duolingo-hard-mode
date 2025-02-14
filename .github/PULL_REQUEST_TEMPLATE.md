@@ -21,3 +21,8 @@ Before | After
 - [ ] Tests added
 - [ ] No breaking changes
 - [ ] ESLint passes
+
+## Versioning Changes
+- [ ] Patch (bug fixes)
+- [ ] Minor (new feature)
+- [ ] Major (breaking change)
