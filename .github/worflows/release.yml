@@ -1,0 +1,31 @@
+name: Release Automation
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create Release using standard-version
+        run: npx standard-version --no-verify
+
+      - name: Push Release Commit and Tag
+        run: |
+          git push --follow-tags origin main
