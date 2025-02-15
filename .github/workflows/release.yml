@@ -76,9 +76,10 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           # Create a temp folder
           mkdir extension
+          mkdir extension/dist
           # Copy the essential files
           cp manifest.json extension/
-          cp dist/content.bundle.js extension/
+          cp dist/content.bundle.js extension/dist/
 
           # If you have more assets, copy them here:
           # cp -r icons extension/
