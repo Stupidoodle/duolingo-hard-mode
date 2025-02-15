@@ -6,6 +6,10 @@ import{
 	ExtensionEventManager
 } from "./ExtensionEventManager.js";
 
+import {
+	normalizeText
+} from "./AccentUtils.js";
+
 /**
  * Challenge type: tapComplete
  * @extends Challenge
@@ -28,19 +32,27 @@ export class ChallengeTapComplete extends Challenge{
 		let removedWord = null;
 
 		let words = this.cleanInputText()
+		let normalizedWords = window.ignoreAccentsEnabled ?
+			words.map(word => normalizeText(word)) :
+			words;
 
 		let removedWordIndex = -1;
 		let text = this.elements.inputField.value;
 
 		// Find the removed word and its original position before deletion
 		for (const word of this.wordBank.wordMap.keys()) {
+			const normalizedWord = window.ignoreAccentsEnabled ? normalizeText(word) : word;
 			if (
-				!words.includes(word) &&
+				!normalizedWords.includes(normalizedWord) &&
 				this.remainingChoices.wordMap.get(word).length !==
 				this.wordBank.wordMap.get(word).length
 			) {
 				removedWord = word;
-				removedWordIndex = text.trim().split(/\s+/).indexOf(word); // Get the original index before deletion
+				let typedWords = text.trim().split(/\s+/);
+				removedWordIndex = typedWords.findIndex(word => {
+					let normalizedTypedWord = window.ignoreAccentsEnabled ? normalizeText(word) : word;
+					return normalizedTypedWord === normalizedWord;
+				});
 				break;
 			}
 		}
@@ -52,11 +64,17 @@ export class ChallengeTapComplete extends Challenge{
 			const dataTestValue = returnedButton.getAttribute("data-test");
 
 			// Get all buttons matching the word
+			console.debug(`Looking for buttons with data-test='${dataTestValue}'`);
+			console.debug(document.querySelectorAll(`button[data-test='${dataTestValue}']`))
+
 			const buttons = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
-				.filter(btn =>
-					btn.getAttribute("aria-disabled") === "false" &&
-					btn.querySelector("[data-test='challenge-tap-token-text']")?.textContent.trim() === removedWord
-				);
+				.filter(btn => {
+					if (btn.getAttribute("aria-disabled") !== "false") return false;
+					const btnWord = btn.querySelector("[data-test='challenge-tap-token-text']")?.textContent.trim();
+					const normalizedBtnWord = window.ignoreAccentsEnabled ? normalizeText(btnWord) : btnWord;
+					const normalizedRemovedWord = window.ignoreAccentsEnabled ? normalizeText(removedWord) : removedWord;
+					return normalizedBtnWord.toLowerCase() === normalizedRemovedWord.toLowerCase();
+				});
 
 			console.debug(buttons);
 
