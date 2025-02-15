@@ -24,17 +24,21 @@ After:
 
 1. **Chrome Web Store** (Coming Soon)
 2. **Manual Installation**:
-   - Clone this repository
-   - Go to `chrome://extensions`
-   - Enable "Developer mode"
-   - Click "Load unpacked" and select the extension directory
+   - Go to the [Releases](https://github.com/Stupidoodle/duolingo-hard-mode/releases/latest) page
+   - Download the latest .zip file
+   - Extract the contents to a folder
+   - Open Chrome and go to `chrome://extensions`
+   - Enable Developer Mode
+   - Click "Load unpacked" and select the extracted folder
+   - Open Duolingo and start learning!
 
 ## Known Issues ⚠️
 
 - ~~**Fill-in-the-blank challenges** with multiple choices can be buggy~~
-- (Some challenge types might become impossible to complete)
-- (Occasional UI glitches when switching between questions)
-- (Keyboard navigation quirks in specific scenarios)
+- ~~(Some challenge types might become impossible to complete)~~
+- ~~(Occasional UI glitches when switching between questions)~~
+- ~~(Keyboard navigation quirks in specific scenarios)~~
+- Sometimes the extension is not activated on the first lesson load (refresh the page to fix), it should be indicated by the disable hard mode button in the top right corner of the page.
 
 ## Future Plans 🚧
 
