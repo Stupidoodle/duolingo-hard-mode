@@ -3,6 +3,10 @@ import{
 } from "./ExtensionEventManager.js"
 
 import{
+	getMatchingKey
+} from "./AccentUtils.js";
+
+import{
 	WordBank
 } from "./WordBank.js";
 
@@ -121,14 +125,12 @@ export class Challenge{
 		if(!userInput)
 			return;
 
-		if(
-			this.remainingChoices.wordMap.has(userInput) &&
-			this.remainingChoices.wordMap.get(userInput).length > 0
-		){
-			console.debug(`Selected ${userInput}`);
+		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
 
-			this.remainingChoices.selectWord(userInput).click();
+		if(matchingKey){
+			console.debug(`Selected ${matchingKey}`);
 
+			this.remainingChoices.selectWord(matchingKey).click();
 			this.elements.inputField.value += " ";
 		}
 		else{
@@ -160,15 +162,15 @@ export class Challenge{
 		else if(key === "Enter"){
 			let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase()
 
-			if(
-				this.remainingChoices.wordMap.has(userInput) &&
-				this.remainingChoices.wordMap.get(userInput).length > 0
-			){
-				console.debug(`Selected ${userInput}`);
+			const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
 
-				this.remainingChoices.selectWord(userInput).click();
+			if(matchingKey){
+				console.debug(`Selected ${matchingKey}`);
+
+				this.remainingChoices.selectWord(matchingKey)?.click();
 			}
 			this.handleSubmit();
+			this.cleanup();
 		}
 	}
 

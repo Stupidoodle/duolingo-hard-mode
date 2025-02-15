@@ -5,6 +5,9 @@ import{
 import{
 	ExtensionEventManager
 } from "./ExtensionEventManager.js"
+import{
+	normalizeText
+} from "./AccentUtils.js";
 
 /**
  * Challenge type: translate
@@ -28,14 +31,18 @@ export class ChallengeTranslate extends Challenge{
 		let removedWord = null;
 
 		let words = this.cleanInputText()
+		let normalizedWords = window.ignoreAccentsEnabled ?
+			words.map(word => normalizeText(word)) :
+			words;
 
 		if(words.length === 0){
 			return;
 		}
 
 		for(const word of this.wordBank.wordMap.keys()){
+			const normalizedWord = window.ignoreAccentsEnabled ? normalizeText(word) : word;
 			if (
-				!(words.includes(word)) &&
+				!(normalizedWords.includes(normalizedWord)) &&
 				this.remainingChoices.wordMap.get(word).length !==
 				this.wordBank.wordMap.get(word).length
 			){

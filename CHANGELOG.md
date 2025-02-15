@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.7.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.6.0...v0.7.0) (2025-02-15)
+
+
+### Features
+
+* add ignore accents toggle button and enhance challenge typing enforcement ([defe728](https://github.com/Stupidoodle/duolingo-hard-mode/commit/defe7281de6d0f90a2312fc25611ca4da6aac722))
+* add utility functions for accent normalization ([9fdd5cc](https://github.com/Stupidoodle/duolingo-hard-mode/commit/9fdd5cc30fab5e2d22865f5cd1539c4492e2ff30))
+* enhance ChallengeTapComplete by normalizing text for accent handling ([0e34ccd](https://github.com/Stupidoodle/duolingo-hard-mode/commit/0e34ccde18a2bb57ba1d83f73ec10eb95ef692ca))
+* enhance ChallengeTranslate by normalizing text for accent handling ([b8c9e12](https://github.com/Stupidoodle/duolingo-hard-mode/commit/b8c9e127305868e05cd556b52a138380ea660882))
+* enhance word selection by normalizing accents ([75bd652](https://github.com/Stupidoodle/duolingo-hard-mode/commit/75bd65238bd39af4b41fbbea632fe37674134f18))
+* improve gap fill choice selection by utilizing accent normalization ([deb7c2b](https://github.com/Stupidoodle/duolingo-hard-mode/commit/deb7c2ba5be38cebe2b029cdea26a217fcda40fc))
+
 ## [0.6.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.5.0...v0.6.0) (2025-02-15)
 
 
