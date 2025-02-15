@@ -16,10 +16,15 @@ module.exports = {
 				use: {
 					loader: "babel-loader",
 					options: {
-						presets: ["@babel/preset-env"],
+						presets: [
+							["@babel/preset-env", {
+								modules: "commonjs", // Force CommonJS module transformation
+								targets: "> 0.25%, not dead" // Target browsers
+							}]
+						],
 					},
 				},
-			},
+			}
 		],
 	},
 	optimization: {
