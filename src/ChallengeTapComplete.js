@@ -29,10 +29,6 @@ export class ChallengeTapComplete extends Challenge{
 
 		let words = this.cleanInputText()
 
-		if(words.length === 0){
-			return;
-		}
-
 		let removedWordIndex = -1;
 		let text = this.elements.inputField.value;
 
