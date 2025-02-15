@@ -6,8 +6,7 @@ on:
       - master
     tags:
       - 'v*.*.*'
-    workflow_dispatch:
-
+  workflow_dispatch:
 
 jobs:
   release:
@@ -34,8 +33,9 @@ jobs:
           git config --global user.email "bryan.tran053@gmail.com"
 
       - name: Commit changes
-        run:
-          git commit --no-verify CHANGELOG.md package.json manifest.json package-lock.json -m "chore(release): 0.4.2"
+        run: |
+          git add CHANGELOG.md package.json manifest.json package-lock.json
+          git commit --no-verify -m "chore(release): 0.4.2"
 
       - name: Push Release Commit and Tag
         run: |
