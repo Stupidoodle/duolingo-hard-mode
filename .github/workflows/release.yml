@@ -28,6 +28,15 @@ jobs:
       - name: Create Release using standard-version
         run: npx standard-version --no-verify
 
+      - name: Set up Git user
+        run: |
+          git config --global user.name "Stupidoodle"
+          git config --global user.email "bryan.tran053@gmail.com"
+
+      - name: Commit changes
+        run:
+          git commit --no-verify CHANGELOG.md package.json manifest.json package-lock.json -m "chore(release): 0.4.2"
+
       - name: Push Release Commit and Tag
         run: |
           git push --follow-tags origin master
