@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.3](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.4.2...v0.4.3) (2025-02-15)
+
+
+### Bug Fixes
+
+* remove early return for empty input in ChallengeTapComplete.js ([5c216fa](https://github.com/Stupidoodle/duolingo-hard-mode/commit/5c216fa5a651861713a110c693aefd38f210eae2))
+
 ### 0.4.2 (2025-02-15)
 
 ### [0.4.1](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.4.0...v0.4.1) (2025-02-14)
