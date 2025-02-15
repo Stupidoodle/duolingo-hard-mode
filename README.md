@@ -1,4 +1,10 @@
 # Duolingo Hard Mode
+[![CI](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/ci.yml/badge.svg)](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/ci.yml)
+[![CodeQL Analysis](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/codeql-analysis.yml)
+[![Dependency Audit](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/dependency-audit.yml/badge.svg)](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/dependency-audit.yml)
+[![Lint](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/lint.yml/badge.svg)](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/lint.yml)
+[![Release Automation](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/release.yml/badge.svg)](https://github.com/Stupidoodle/duolingo-hard-mode/actions/workflows/release.yml)
+[![codecov](https://codecov.io/github/Stupidoodle/duolingo-hard-mode/graph/badge.svg?token=J2UJ0CR82A)](https://codecov.io/github/Stupidoodle/duolingo-hard-mode)
 
 A Chrome extension that replaces multiple-choice questions in Duolingo lessons with typing inputs, making language learning more challenging and effective.
 
