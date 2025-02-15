@@ -2,7 +2,7 @@ name: "Auto Release"
 
 on:
   push:
-    # Only run if the push is a version tag, e.g. v1.2.3
+    # Only run if the push is a semver-like tag (v0.6.0, v1.2.3, etc.)
     tags:
       - "v*.*.*"
   workflow_dispatch: {}
@@ -26,74 +26,91 @@ jobs:
       - name: Build production
         run: npm run build
 
+      # ----------------------------------------------------------
+      # 1) Parse CHANGELOG.md for the snippet of the current tag
+      #    If none found, fallback to the top version in the file.
+      # ----------------------------------------------------------
       - name: Extract changelog entry
         id: changelog
         run: |
-          # Strip the "v" prefix from the tag name, e.g. "v1.2.3" -> "1.2.3"
-          VERSION="${GITHUB_REF_NAME#v}"
-          echo "Parsing CHANGELOG.md for version $VERSION"
+          VERSION="${GITHUB_REF_NAME#v}"  # e.g. v0.6.0 -> 0.6.0
+          echo "Parsing CHANGELOG.md for version $VERSION..."
 
-          # 1) Try to grab lines from '## [VERSION]' (or '## VERSION') up to next '## '
-          #    Then remove the last line in that range with sed '$d'.
+          # Attempt to capture from the heading for $VERSION up to the next '## ' heading.
+          # We'll remove the last line of that block (the line that triggered the stop) with sed.
           snippet=$(
-            awk "/^## \\[?$VERSION\\]?/,/^## /{print}" CHANGELOG.md \
+            awk "/^## \\[?$VERSION\\]?\\(?/,/^## /{print}" CHANGELOG.md \
             | sed '$d'
           )
 
-          # If snippet is empty, fall back to the *first* version heading in the file (top entry).
           if [ -z "$snippet" ]; then
-            echo "No snippet for version $VERSION. Falling back to latest version in file..."
+            echo "No snippet found for $VERSION. Attempting fallback to latest version in file..."
             # Grab the topmost version from lines matching '## [x.x.x]' or '## x.x.x'
             fallback_version=$(grep -oP '^## \[?\K(\d+\.\d+\.\d+)(?=\]?)' CHANGELOG.md | head -1)
-
             if [ -n "$fallback_version" ]; then
               echo "Falling back to version: $fallback_version"
               snippet=$(
-                awk "/^## \\[?$fallback_version\\]?/,/^## /{print}" CHANGELOG.md \
+                awk "/^## \\[?$fallback_version\\]?\\(?/,/^## /{print}" CHANGELOG.md \
                 | sed '$d'
               )
               if [ -z "$snippet" ]; then
-                snippet="No snippet found for fallback version ($fallback_version)."
+                snippet="(No snippet found for fallback version: $fallback_version.)"
               fi
             else
-              snippet="No version headings found in CHANGELOG.md at all."
+              snippet="(No version headings found in CHANGELOG.md at all.)"
             fi
           fi
 
-          # Output to GitHub Actions for subsequent steps
+          # Publish snippet for use in later steps
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$snippet"       >> $GITHUB_OUTPUT
           echo "EOF"           >> $GITHUB_OUTPUT
 
+      # ----------------------------------------------------------
+      # 2) Zip extension files for "Load Unpacked"
+      #    (Add icons/background scripts if needed).
+      # ----------------------------------------------------------
+      - name: Zip extension folder
+        id: zip_extension
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Create a temp folder
+          mkdir extension
+          # Copy the essential files
+          cp manifest.json extension/
+          cp dist/content.bundle.js extension/
+
+          # If you have more assets, copy them here:
+          # cp -r icons extension/
+          # cp background.js extension/
+          # etc.
+
+          zip -r "duolingo-hard-mode-$VERSION.zip" extension
+
+      # ----------------------------------------------------------
+      # 3) Create GitHub Release with the parsed changelog snippet
+      # ----------------------------------------------------------
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}          # e.g. v0.6.0
           release_name: "Release ${{ github.ref_name }}"
           draft: false
           prerelease: false
-          # Use our snippet as the release body
           body: ${{ steps.changelog.outputs.changelog }}
 
-      - name: Upload dist/content.bundle.js
+      # ----------------------------------------------------------
+      # 4) Upload the ZIP as a release asset
+      # ----------------------------------------------------------
+      - name: Upload ZIP to Release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/content.bundle.js
-          asset_name: content.bundle.js
-          asset_content_type: application/javascript
-
-      - name: Upload manifest.json
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: manifest.json
-          asset_name: manifest.json
-          asset_content_type: application/json
+          asset_path: duolingo-hard-mode-${{ github.ref_name }}.zip
+          asset_name: duolingo-hard-mode-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
