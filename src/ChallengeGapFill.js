@@ -12,11 +12,15 @@ import{
 export class ChallengeGapFill{
 	/**
 	 * Instantiates a new ChallengeTranslate
-	 * @param {HTMLElement} choiceDiv - Challenge div
+	 * @param {HTMLElement} challengeDiv - Challenge div
+	 * @param {HTMLElement} choiceDiv - Choice div
 	 * @param {ExtensionEventManager} eventManager - Event manager
 	 * @throws {Error} If choiceDiv is not found
 	 */
-	constructor(choiceDiv, eventManager){
+	constructor(challengeDiv, choiceDiv, eventManager){
+		/** @type {HTMLElement} */
+		this.challengeDiv = challengeDiv;
+
 		/** @type {HTMLElement} */
 		this.choiceDiv = choiceDiv;
 
@@ -71,7 +75,9 @@ export class ChallengeGapFill{
 			return console.warn("Choice bank not found");
 		}
 
-		this.choiceDiv.style.display = "none";
+		this.choiceBank.choiceMap.forEach((value) => {
+			value[0].style.display = "none";
+		});
 
 		this.elements.inputField = document.createElement("textarea");
 		this.elements.inputField.dataset.extension = "true";
@@ -490,8 +496,23 @@ export class ChallengeGapFill{
 			console.debug(`Selecting choice: ${userInput}`);
 
 			this.choiceBank.choiceMap.get(userInput)[0].click();
+			// Set the style.display for all other choices to none
+			this.choiceBank.choiceMap.forEach((value, key) => {
+				if(key !== userInput){
+					value[0].style.display = "none";
+				}
+			});
+			this.choiceBank.choiceMap.get(userInput)[0].style.display = "flex";
 
 			this.elements.inputField.value += " ";
+
+			this.elements.inputField.style.border = "2px solid green";
+			this.elements.inputField.style.animation = "shake 0.3s";
+
+			setTimeout(() => {
+				this.elements.inputField.style.border = "2px solid rgb(var(--color-swan))";
+				this.elements.inputField.style.animation = "";
+			}, 300);
 		}
 		else{
 			console.debug(`Choice not found: ${userInput}`);
@@ -518,12 +539,14 @@ export class ChallengeGapFill{
 	/**
 	 * Cleans up the challenge
 	 */
-	/*cleanup(){
+	cleanup(){
 		this.eventManager.unregisterChallenge(this.challengeId);
 		if(this.elements?.inputField){
 			this.elements.inputField.remove();
 			this.elements.inputField = null;
-			this.choiceDiv.style.display = "flex";
+			this.choiceBank.choiceMap.forEach((value) => {
+				value[0].style.display = "flex";
+			});
 		}
-	}*/
+	}
 }
