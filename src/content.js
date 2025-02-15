@@ -13,6 +13,7 @@ import{
 import{
 	ExtensionEventManager
 } from "./ExtensionEventManager.js";
+import {ChallengeGapFill} from "./ChallengeGapFill.js";
 
 const eventManager = new ExtensionEventManager();
 eventManager.initGlobalKeyCapture();
@@ -786,11 +787,13 @@ function enforceTyping(){
 	const challengeDiv = document.querySelector("div[data-test^='challenge challenge-']")
 
 	if(activeChallenge && (!challengeDiv || challengeDiv !== activeChallenge.challengeDiv)){
+		console.debug("Cleaning up active challenge");
 		activeChallenge.cleanup?.();
 		activeChallenge = null;
 	}
 
 	if(!challengeDiv || challengeDiv.hasAttribute("data-extension-processed")) {
+		console.debug("No challenge div found or already processed");
 		return;
 	}
 
@@ -801,15 +804,22 @@ function enforceTyping(){
 	}
 
 	console.debug(challengeType)
-
-	try{
+	if(challengeType !== "gapFill") {
+		try {
+			challengeDiv.setAttribute("data-extension-processed", "true");
+			activeChallenge = ChallengeFactory.create(challengeType, challengeDiv, eventManager);
+			console.debug(`Creating challenge ${challengeType}`);
+			activeChallenge.enforceTyping();
+		} catch (error) {
+			console.error(error.message)
+		}
+	}
+	else if(challengeType === "gapFill"){
 		challengeDiv.setAttribute("data-extension-processed", "true");
-		activeChallenge = ChallengeFactory.create(challengeType, challengeDiv, eventManager);
+		const choiceDiv = document.querySelector('div[aria-label="choice"][role="radiogroup"]');
+		activeChallenge = new ChallengeGapFill(choiceDiv, eventManager);
 		console.debug(`Creating challenge ${challengeType}`);
 		activeChallenge.enforceTyping();
-	}
-	catch(error){
-		console.error(error.message)
 	}
 }
 /**
