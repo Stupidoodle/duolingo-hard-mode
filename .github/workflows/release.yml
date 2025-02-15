@@ -2,10 +2,10 @@ name: "Auto Release"
 
 on:
   push:
-    # Only run if the push is a version tag: v1.2.3, v2.0.0, etc.
+    # Only run if the push is a version tag, e.g. v1.2.3
     tags:
       - "v*.*.*"
-  workflow_dispatch: {}  # Allows manual triggering
+  workflow_dispatch: {}
 
 jobs:
   release:
@@ -26,58 +26,62 @@ jobs:
       - name: Build production
         run: npm run build
 
-      # -----------------------------------------------------
-      # 1) Extract the version from the tag (e.g. v1.2.3 -> 1.2.3)
-      # 2) Grab the relevant section from CHANGELOG.md for that version
-      #    The snippet search uses an awk range:
-      #      from lines matching '^## \[?VERSION\]?'
-      #      until the next '^## ' line.
-      #    Then we remove the last line of that range with `sed '$d'`.
-      #    Adjust if your changelog headings differ (e.g. "## 1.2.3" or "## [1.2.3]").
-      # -----------------------------------------------------
       - name: Extract changelog entry
         id: changelog
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"  # e.g. "v1.2.3" -> "1.2.3"
-          echo "Parsing changelog for version $VERSION ..."
+          # Strip the "v" prefix from the tag name, e.g. "v1.2.3" -> "1.2.3"
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Parsing CHANGELOG.md for version $VERSION"
+
+          # 1) Try to grab lines from '## [VERSION]' (or '## VERSION') up to next '## '
+          #    Then remove the last line in that range with sed '$d'.
           snippet=$(
-            awk "/^## \\[?$VERSION\\]?/,/^## /{print}" CHANGELOG.md | sed '$d'
+            awk "/^## \\[?$VERSION\\]?/,/^## /{print}" CHANGELOG.md \
+            | sed '$d'
           )
-          
-          # If no snippet is found, you might want a fallback text:
+
+          # If snippet is empty, fall back to the *first* version heading in the file (top entry).
           if [ -z "$snippet" ]; then
-            echo "No snippet found, using fallback text"
-            snippet="No specific changelog entry for $VERSION."
+            echo "No snippet for version $VERSION. Falling back to latest version in file..."
+            # Grab the topmost version from lines matching '## [x.x.x]' or '## x.x.x'
+            fallback_version=$(grep -oP '^## \[?\K(\d+\.\d+\.\d+)(?=\]?)' CHANGELOG.md | head -1)
+
+            if [ -n "$fallback_version" ]; then
+              echo "Falling back to version: $fallback_version"
+              snippet=$(
+                awk "/^## \\[?$fallback_version\\]?/,/^## /{print}" CHANGELOG.md \
+                | sed '$d'
+              )
+              if [ -z "$snippet" ]; then
+                snippet="No snippet found for fallback version ($fallback_version)."
+              fi
+            else
+              snippet="No version headings found in CHANGELOG.md at all."
+            fi
           fi
 
-          # Output to GitHub Actions
+          # Output to GitHub Actions for subsequent steps
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$snippet"       >> $GITHUB_OUTPUT
           echo "EOF"           >> $GITHUB_OUTPUT
 
-      # -----------------------------------------------------
-      # Create a new release, using the parsed changelog snippet as the body.
-      # -----------------------------------------------------
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
           release_name: "Release ${{ github.ref_name }}"
           draft: false
           prerelease: false
+          # Use our snippet as the release body
           body: ${{ steps.changelog.outputs.changelog }}
 
-      # -----------------------------------------------------
-      # Upload your extension assets (content.bundle.js + manifest.json)
-      # to the newly created release
-      # -----------------------------------------------------
       - name: Upload dist/content.bundle.js
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: dist/content.bundle.js
@@ -87,7 +91,7 @@ jobs:
       - name: Upload manifest.json
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: manifest.json
