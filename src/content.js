@@ -804,7 +804,7 @@ function enforceTyping(){
 	}
 
 	console.debug(challengeType)
-	if(challengeType !== "gapFill") {
+	if(challengeType !== "gapFill" && challengeType !== "assist"){
 		try {
 			challengeDiv.setAttribute("data-extension-processed", "true");
 			activeChallenge = ChallengeFactory.create(challengeType, challengeDiv, eventManager);
@@ -814,10 +814,10 @@ function enforceTyping(){
 			console.error(error.message)
 		}
 	}
-	else if(challengeType === "gapFill"){
+	else if(challengeType === "gapFill" || challengeType === "assist"){
 		challengeDiv.setAttribute("data-extension-processed", "true");
 		const choiceDiv = document.querySelector('div[aria-label="choice"][role="radiogroup"]');
-		activeChallenge = new ChallengeGapFill(choiceDiv, eventManager);
+		activeChallenge = new ChallengeGapFill(challengeDiv, choiceDiv, eventManager);
 		console.debug(`Creating challenge ${challengeType}`);
 		activeChallenge.enforceTyping();
 	}
