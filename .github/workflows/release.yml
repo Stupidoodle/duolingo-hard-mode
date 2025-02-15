@@ -104,6 +104,12 @@ jobs:
           prerelease: false
           body: ${{ steps.changelog.outputs.changelog }}
 
+      - name: Extract Version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}  # Extracts the version from 'refs/tags/vX.X.X'
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       # ----------------------------------------------------------
       # 4) Upload the ZIP as a release asset
       # ----------------------------------------------------------
@@ -113,6 +119,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: duolingo-hard-mode-${{ github.ref_name#v }}.zip
-          asset_name: duolingo-hard-mode-${{ github.ref_name#v }}.zip
+          asset_path: duolingo-hard-mode-$VERSION.zip
+          asset_name: duolingo-hard-mode-$VERSION.zip
           asset_content_type: application/zip
