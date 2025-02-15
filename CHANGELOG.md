@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.4.3...v0.5.0) (2025-02-15)
+
+
+### Features
+
+* add toggle button for Hard Mode and implement MutationObserver for challenge enforcement closes [#4](https://github.com/Stupidoodle/duolingo-hard-mode/issues/4) ([b15fd2b](https://github.com/Stupidoodle/duolingo-hard-mode/commit/b15fd2bee1c99da6ba35d922f601245b513509f0))
+
 ### [0.4.3](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.4.2...v0.4.3) (2025-02-15)
 
 
