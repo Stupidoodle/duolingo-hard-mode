@@ -12,7 +12,7 @@ Before:
 ![Before](https://i.imgur.com/bUjLt49.png)
 
 After:
-![After](https://i.imgur.com/zOoIysb.gif)
+![After](https://github.com/user-attachments/assets/a9bd57fa-5285-46d3-95e7-60df3ead4457)
 ## Features
 
 - Converts word bank challenges to text input fields
