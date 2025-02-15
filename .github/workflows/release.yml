@@ -1,26 +1,21 @@
-name: Release Automation
+name: "Auto Release"
 
 on:
   push:
-    branches:
-      - main # We need to stop this automation for now
+    # Only run if the push is a version tag: v1.2.3, v2.0.0, etc.
     tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-
-permissions:
-  contents: write
-  packages: write
+      - "v*.*.*"
+  workflow_dispatch: {}  # Allows manual triggering
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Check out source code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node
         uses: actions/setup-node@v3
         with:
           node-version: 16
@@ -28,25 +23,73 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Configure Git User
+      - name: Build production
+        run: npm run build
+
+      # -----------------------------------------------------
+      # 1) Extract the version from the tag (e.g. v1.2.3 -> 1.2.3)
+      # 2) Grab the relevant section from CHANGELOG.md for that version
+      #    The snippet search uses an awk range:
+      #      from lines matching '^## \[?VERSION\]?'
+      #      until the next '^## ' line.
+      #    Then we remove the last line of that range with `sed '$d'`.
+      #    Adjust if your changelog headings differ (e.g. "## 1.2.3" or "## [1.2.3]").
+      # -----------------------------------------------------
+      - name: Extract changelog entry
+        id: changelog
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          VERSION="${GITHUB_REF_NAME#v}"  # e.g. "v1.2.3" -> "1.2.3"
+          echo "Parsing changelog for version $VERSION ..."
+          snippet=$(
+            awk "/^## \\[?$VERSION\\]?/,/^## /{print}" CHANGELOG.md | sed '$d'
+          )
+          
+          # If no snippet is found, you might want a fallback text:
+          if [ -z "$snippet" ]; then
+            echo "No snippet found, using fallback text"
+            snippet="No specific changelog entry for $VERSION."
+          fi
 
-      - name: Create Release using standard-version
-        run: npx standard-version --no-verify
+          # Output to GitHub Actions
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$snippet"       >> $GITHUB_OUTPUT
+          echo "EOF"           >> $GITHUB_OUTPUT
 
-      - name: Commit changes
+      # -----------------------------------------------------
+      # Create a new release, using the parsed changelog snippet as the body.
+      # -----------------------------------------------------
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git add CHANGELOG.md package.json manifest.json
-          [ -f package-lock.json ] && git add package-lock.json || true
-          git diff --staged --quiet || git commit --no-verify -m "chore(release): bump version"
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: "Release ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+          body: ${{ steps.changelog.outputs.changelog }}
 
-      - name: Push Release Commit and Tag
+      # -----------------------------------------------------
+      # Upload your extension assets (content.bundle.js + manifest.json)
+      # to the newly created release
+      # -----------------------------------------------------
+      - name: Upload dist/content.bundle.js
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git push origin master
-          git push --tags
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/content.bundle.js
+          asset_name: content.bundle.js
+          asset_content_type: application/javascript
+
+      - name: Upload manifest.json
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: manifest.json
+          asset_name: manifest.json
+          asset_content_type: application/json
