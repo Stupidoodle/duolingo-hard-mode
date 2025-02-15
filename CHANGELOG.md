@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.5.0...v0.6.0) (2025-02-15)
+
+
+### Features
+
+* add ChallengeGapFill class to handle gap fill challenges and user input ([dd9f9dc](https://github.com/Stupidoodle/duolingo-hard-mode/commit/dd9f9dc26e9c68686c17376ea8d8044f1e3257aa))
+* extend ChallengeGapFill to support 'assist' challenge type alongside 'gapFill' ([f7b002e](https://github.com/Stupidoodle/duolingo-hard-mode/commit/f7b002e066ed2787381ecd43e293d659dcdbd3e8))
+* implement ChoiceBank class to manage challenge choices and extract radio buttons ([46c4a34](https://github.com/Stupidoodle/duolingo-hard-mode/commit/46c4a34f2fa0337c1cf19e8cc05162c250835e9b))
+* integrate ChallengeGapFill for gap fill challenges in content.js ([28fda07](https://github.com/Stupidoodle/duolingo-hard-mode/commit/28fda07b02a26a6437d2d099428a6de4ef12cf4e))
+* update ChallengeGapFill to manage challenge and choice divs, enhance choice display logic ([7e368c0](https://github.com/Stupidoodle/duolingo-hard-mode/commit/7e368c0a8f38fe216f5b75502544a4e90df86a24))
+
+
+### Bug Fixes
+
+* change error logging to warning for missing word bank in injectTypingInput ([dddd63a](https://github.com/Stupidoodle/duolingo-hard-mode/commit/dddd63a377bdd0d5addc20dd91c86ecbd08c3ebf))
+
 ## [0.5.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.4.3...v0.5.0) (2025-02-15)
 
 
