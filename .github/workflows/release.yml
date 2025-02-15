@@ -3,7 +3,7 @@ name: Release Automation
 on:
   push:
     branches:
-      - master
+      - main # We need to stop this automation for now
     tags:
       - 'v*.*.*'
   workflow_dispatch:
