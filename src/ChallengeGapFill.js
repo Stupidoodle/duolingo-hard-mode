@@ -5,6 +5,7 @@ import{
 import{
 	ExtensionEventManager
 } from "./ExtensionEventManager.js";
+import {getMatchingKey} from "./AccentUtils.js";
 
 /**
  * Challenge type: gapFill
@@ -466,10 +467,12 @@ export class ChallengeGapFill{
 		else if(key === "Enter"){
 			let userInput = this.elements.inputField.value.trim().toLowerCase();
 
-			if(this.choiceBank.choiceMap.has(userInput)){
-				console.debug(`Selecting choice: ${userInput}`);
+			const matchingKey = getMatchingKey(this.choiceBank.choiceMap, userInput, window.ignoreAccentsEnabled);
 
-				this.choiceBank.choiceMap.get(userInput)[0].click();
+			if(matchingKey){
+				console.debug(`Selecting choice: ${matchingKey}`);
+
+				this.choiceBank.choiceMap.get(matchingKey)[0]?.click();
 			}
 			this.handleSubmit();
 		}
@@ -492,17 +495,19 @@ export class ChallengeGapFill{
 			return;
 		}
 
-		if(this.choiceBank.choiceMap.has(userInput)){
-			console.debug(`Selecting choice: ${userInput}`);
+		const matchingKey = getMatchingKey(this.choiceBank.choiceMap, userInput, window.ignoreAccentsEnabled);
 
-			this.choiceBank.choiceMap.get(userInput)[0].click();
+		if(matchingKey){
+			console.debug(`Selecting choice: ${matchingKey}`);
+
+			this.choiceBank.choiceMap.get(matchingKey)[0].click();
 			// Set the style.display for all other choices to none
 			this.choiceBank.choiceMap.forEach((value, key) => {
 				if(key !== userInput){
 					value[0].style.display = "none";
 				}
 			});
-			this.choiceBank.choiceMap.get(userInput)[0].style.display = "flex";
+			this.choiceBank.choiceMap.get(matchingKey)[0].style.display = "flex";
 
 			this.elements.inputField.value += " ";
 
@@ -515,7 +520,7 @@ export class ChallengeGapFill{
 			}, 300);
 		}
 		else{
-			console.debug(`Choice not found: ${userInput}`);
+			console.debug(`Choice not found: ${matchingKey}`);
 
 			this.elements.inputField.style.border = "2px solid red";
 			this.elements.inputField.style.animation = "shake 0.3s";
