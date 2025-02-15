@@ -174,11 +174,10 @@ export class Challenge{
 
 	/**
 	 * Injects a textarea element for typing input
-	 * @throws {Error} FIXME If word bank is not found
 	 */
 	injectTypingInput(){
 		if(!this.elements.wordBank || !this.wordBank)
-			return console.error("Word bank not found");
+			return console.warn("Word bank not found");
 
 		this.elements.wordBank.style.display = "none";
 
