@@ -1,14 +1,8 @@
-import{
-	ExtensionEventManager
-} from "./ExtensionEventManager.js"
+import {ExtensionEventManager} from "./ExtensionEventManager.js"
 
-import{
-	getMatchingKey
-} from "./AccentUtils.js";
+import {getMatchingKey} from "./AccentUtils.js";
 
-import{
-	WordBank
-} from "./WordBank.js";
+import {WordBank} from "./WordBank.js";
 
 /**
  * Abstract class for all challenges
@@ -62,13 +56,41 @@ export class Challenge{
 			return [];
 		}
 
-		inputField.value = text.slice(0, -1);
+		inputField.value = text.substring(0, text.length - 1);
 
 		let words = inputField.value.trim().split(/\s+/);
 
-		if(text.endsWith(" ") && words.length > 0){
+		if(words.length === 0){
+			return [];
+		}
+
+		for(const word of [...words]){
+			if(word.includes("'")){
+				if(Array.from(this.wordBank.wordMap.keys()).some(word =>
+					typeof word === "string" && word.endsWith("'"))){
+					const apostropheIndex = word.indexOf("'");
+					const firstPart = word.slice(0, apostropheIndex + 1);  // includes the apostrophe
+					const secondPart = word.slice(apostropheIndex + 1);
+
+					words[words.indexOf(word)] = firstPart;
+					words.splice(words.indexOf(firstPart) + 1, 0, secondPart);
+				}
+				else if(Array.from(this.wordBank.wordMap.keys()).some(word =>
+					typeof word === "string" && word.startsWith("'"))) {
+					const apostropheIndex = word.indexOf("'");
+					const firstPart = word.slice(0, apostropheIndex);
+					const secondPart = word.slice(apostropheIndex);  // includes the apostrophe
+
+					words[words.indexOf(word)] = firstPart;
+					words.splice(words.indexOf(firstPart) + 1, 0, secondPart);
+				}
+			}
+		}
+
+		if(text.endsWith(" ") && words.length > 0) {
 			words.pop();
 		}
+
 		return words;
 	}
 
@@ -120,29 +142,71 @@ export class Challenge{
 	 * Handles space key event
 	 */
 	handleSpace(){
-		let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase();
+		let userInput = this.elements.inputField.value.trim().split(/\s+/).pop().toLowerCase();
 
 		if(!userInput)
 			return;
 
-		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
+		if(userInput.includes("'")){
+			const apostropheIndex = userInput.indexOf("'");
+			const firstPart = userInput.slice(0, apostropheIndex);
+			const secondPart = userInput.slice(apostropheIndex);  // includes the apostrophe
 
-		if(matchingKey){
-			console.debug(`Selected ${matchingKey}`);
+			const firstMatchingKey = getMatchingKey(this.remainingChoices.wordMap, firstPart, window.ignoreAccentsEnabled);
+			const secondMatchingKey = getMatchingKey(this.remainingChoices.wordMap, secondPart, window.ignoreAccentsEnabled);
 
-			this.remainingChoices.selectWord(matchingKey).click();
-			this.elements.inputField.value += " ";
+			if(firstMatchingKey && secondMatchingKey){
+				console.debug(`Selected ${firstMatchingKey} and ${secondMatchingKey}`);
+
+				this.remainingChoices.selectWord(firstMatchingKey).click();
+				this.remainingChoices.selectWord(secondMatchingKey).click();
+				this.elements.inputField.value += " ";
+			}
+			else if(firstMatchingKey){
+				// NOTE: This could lead to unexpected behaviour
+				console.debug(`Selected ${firstMatchingKey}`);
+
+				this.remainingChoices.selectWord(firstMatchingKey).click();
+				this.elements.inputField.value += " ";
+			}
+			else if(secondMatchingKey){
+				// NOTE: This could lead to unexpected behaviour
+				console.debug(`Selected ${secondMatchingKey}`);
+
+				this.remainingChoices.selectWord(secondMatchingKey).click();
+				this.elements.inputField.value += " ";
+			}
+			else{
+				console.warn(`Word ${userInput} not found in choices ${Array.from(this.remainingChoices.wordMap.keys())}`);
+
+				this.elements.inputField.style.border = "2px solid red";
+				this.elements.inputField.style.animation = "shake 0.3s";
+
+				setTimeout(() => {
+					this.elements.inputField.style.border = "2px solid rgb(var(--color-swan))";
+					this.elements.inputField.style.animation = "";
+				}, 300);
+			}
 		}
 		else{
-			console.warn(`Word ${userInput} not found in choices ${Array.from(this.remainingChoices.wordMap.keys())}`);
+			const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
 
-			this.elements.inputField.style.border = "2px solid red";
-			this.elements.inputField.style.animation = "shake 0.3s";
+			if (matchingKey) {
+				console.debug(`Selected ${matchingKey}`);
 
-			setTimeout(() => {
-				this.elements.inputField.style.border = "2px solid rgb(var(--color-swan))";
-				this.elements.inputField.style.animation = "";
-			}, 300);
+				this.remainingChoices.selectWord(matchingKey).click();
+				this.elements.inputField.value += " ";
+			} else {
+				console.warn(`Word ${userInput} not found in choices ${Array.from(this.remainingChoices.wordMap.keys())}`);
+
+				this.elements.inputField.style.border = "2px solid red";
+				this.elements.inputField.style.animation = "shake 0.3s";
+
+				setTimeout(() => {
+					this.elements.inputField.style.border = "2px solid rgb(var(--color-swan))";
+					this.elements.inputField.style.animation = "";
+				}, 300);
+			}
 		}
 	}
 
@@ -158,9 +222,77 @@ export class Challenge{
 			console.debug(`Selected ${matchingKey}`);
 
 			this.remainingChoices.selectWord(matchingKey)?.click();
+			this.handleSubmit();
+			this.cleanup();
 		}
-		this.handleSubmit();
-		this.cleanup();
+	}
+
+	/**
+	 * Handles space after apostrophe key event
+	 */
+	handleSpaceAfterApostrophe(){
+		let userInput = this.elements.inputField.value.trim().split(/\s+/).pop().toLowerCase();
+
+		if(!userInput){
+			return;
+		}
+
+		let tokenAfterApostrophe = userInput.split("'").pop();
+		const matchingKeyAfterApostrophe = getMatchingKey(this.remainingChoices.wordMap, tokenAfterApostrophe, window.ignoreAccentsEnabled);
+
+		if(matchingKeyAfterApostrophe){
+			console.debug(`Selected ${matchingKeyAfterApostrophe}`);
+
+			this.remainingChoices.selectWord(matchingKeyAfterApostrophe).click();
+			this.elements.inputField.value += " ";
+
+			// This is not silly wtf
+			// noinspection SillyAssignmentJS
+			this.handleSpace = this.handleSpace;
+		}
+		else{
+			console.warn(`Word ${tokenAfterApostrophe} not found in choices ${Array.from(this.remainingChoices.wordMap.keys())}`);
+
+			this.elements.inputField.style.border = "2px solid red";
+			this.elements.inputField.style.animation = "shake 0.3s";
+
+			setTimeout(() => {
+				this.elements.inputField.style.border = "2px solid rgb(var(--color-swan))";
+				this.elements.inputField.style.animation = "";
+			}, 300);
+		}
+	}
+
+	/**
+	 * Handles apostrophe key event
+	 */
+	handleApostrophe(){
+		let userInput = this.elements.inputField.value.trim().split(/\s+/).pop().toLowerCase();
+
+		if(!userInput)
+			return;
+
+		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
+
+		if(matchingKey){
+			console.debug(`Selected ${matchingKey}`);
+
+			this.remainingChoices.selectWord(matchingKey).click();
+			this.elements.inputField.value += "'";
+
+			this.handleSpace = this.handleSpaceAfterApostrophe;
+		}
+		else{
+			console.warn(`Word ${userInput} not found in choices ${Array.from(this.remainingChoices.wordMap.keys())}`);
+
+			this.elements.inputField.style.border = "2px solid red";
+			this.elements.inputField.style.animation = "shake 0.3s";
+
+			setTimeout(() => {
+				this.elements.inputField.style.border = "2px solid rgb(var(--color-swan))";
+				this.elements.inputField.style.animation = "";
+			}, 300);
+		}
 	}
 
 	/**
@@ -178,6 +310,16 @@ export class Challenge{
 		}
 		else if(key === "Enter"){
 			this.handleEnter();
+		}
+		else if(key === "'"){
+			if(Array.from(this.remainingChoices.wordMap.keys()).some(word =>
+				typeof word === "string" && word.endsWith("'")
+			)){
+				this.handleApostrophe();
+			}
+			else{
+				this.elements.inputField.value += "'";
+			}
 		}
 	}
 
