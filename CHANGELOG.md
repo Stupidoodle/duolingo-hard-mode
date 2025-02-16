@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.7.0...v0.8.0) (2025-02-16)
+
+
+### Features
+
+* enhance input handling for apostrophes and spaces in Challenge.js closes [#2](https://github.com/Stupidoodle/duolingo-hard-mode/issues/2) ([be60a80](https://github.com/Stupidoodle/duolingo-hard-mode/commit/be60a8024adf6b8e657390e9eca1a36d3ef2be37))
+
+
+### Bug Fixes
+
+* ensure early return for empty input in handleBackspace method ([990ff4b](https://github.com/Stupidoodle/duolingo-hard-mode/commit/990ff4beb153a47ecbf2a695a9c1bfcb6275769a))
+* update release asset naming to remove version from zip file ([dd9ac05](https://github.com/Stupidoodle/duolingo-hard-mode/commit/dd9ac05c9d0378ed76e4f40566e12d62d4a5ddef))
+* update release workflow to use GITHUB_ENV for changelog and adjust asset naming ([278947c](https://github.com/Stupidoodle/duolingo-hard-mode/commit/278947c9c270c757995e77b6504979dbe6f2a652))
+
 ## [0.7.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.6.0...v0.7.0) (2025-02-15)
 
 
