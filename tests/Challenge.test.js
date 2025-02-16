@@ -6,10 +6,7 @@ import { ExtensionEventManager } from "../src/ExtensionEventManager.js";
 import { WordBank } from "../src/WordBank.js";
 
 // Create a dummy subclass to allow instantiation.
-class DummyChallenge extends Challenge {
-	handleBackspace() {}
-	handleSubmit() {} // Needed because handleKeyEvent calls it on Enter.
-}
+class DummyChallenge extends Challenge {}
 
 function createChallengeDiv(challengeType = "dummy") {
 	const div = document.createElement("div");
@@ -65,6 +62,13 @@ describe("DummyChallenge (base methods in Challenge)", () => {
 		expect(challenge.elements.inputField.value).toBe("hell");
 	});
 
+	test("cleanInputText returns [] when text.length is 0", () => {
+		challenge.elements.inputField.value = "";
+		const words = challenge.cleanInputText();
+		expect(words).toEqual([]);
+		expect(challenge.elements.inputField.value).toBe("");
+	});
+
 	test("cleanup unregisters challenge and cleans up DOM elements", () => {
 		challenge.elements.inputField = document.createElement("textarea");
 		challenge.elements.wordBank.style.display = "none";
@@ -75,6 +79,12 @@ describe("DummyChallenge (base methods in Challenge)", () => {
 		expect(challenge.elements.wordBank.style.display).toBe("flex");
 	});
 
+	test("enforceTyping injects typing input", () => {
+		challenge.injectTypingInput = jest.fn();
+		challenge.enforceTyping();
+		expect(challenge.injectTypingInput).toHaveBeenCalled();
+	});
+
 	test("injectTypingInput hides word bank and creates textarea", () => {
 		challenge.elements.wordBank.style.display = "flex";
 		challenge.elements.inputField = null;
@@ -82,6 +92,29 @@ describe("DummyChallenge (base methods in Challenge)", () => {
 		expect(challenge.elements.wordBank.style.display).toBe("none");
 		expect(challenge.elements.inputField).not.toBeNull();
 		expect(challenge.elements.inputField.tagName).toBe("TEXTAREA");
+	});
+
+	test("injectTypingInput stops propagation of input and keydown events and calls handleKeyEvent for special keys", () =>{
+		challenge.injectTypingInput();
+		// spy e.stopPropagation, e.stopImmediatePropagation, and e.preventDefault
+		const stopPropagationSpy = jest.spyOn(Event.prototype, "stopPropagation");
+		const stopImmediatePropagationSpy = jest.spyOn(Event.prototype, "stopImmediatePropagation");
+		const preventDefaultSpy = jest.spyOn(Event.prototype, "preventDefault");
+		// spy handleKeyEvent
+		challenge.handleKeyEvent = jest.fn();
+		// create and dispatch input event
+		const inputEvent = new Event("input");
+		challenge.elements.inputField.dispatchEvent(inputEvent);
+		expect(stopPropagationSpy).toHaveBeenCalled();
+		expect(stopImmediatePropagationSpy).toHaveBeenCalled();
+		const keydownEvent = new KeyboardEvent("keydown", { key: " " });
+		challenge.elements.inputField.dispatchEvent(keydownEvent);
+		expect(preventDefaultSpy).toHaveBeenCalled();
+		expect(challenge.handleKeyEvent).toHaveBeenCalledWith(keydownEvent);
+	})
+
+	test("handleBackspace throws error if not overridden", () => {
+		expect(() => challenge.handleBackspace()).toThrow();
 	});
 
 	test("handleSpace selects available word and appends a space", () => {
@@ -111,5 +144,12 @@ describe("DummyChallenge (base methods in Challenge)", () => {
 		const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
 		challenge.handleKeyEvent(enterEvent);
 		expect(challenge.handleEnter).toHaveBeenCalled();
+	});
+
+	test("handleSubmit clicks submit button", () => {
+		const submitBtn = document.querySelector("button[data-test='player-next']");
+		submitBtn.click = jest.fn();
+		challenge.handleSubmit();
+		expect(submitBtn.click).toHaveBeenCalled();
 	});
 });
