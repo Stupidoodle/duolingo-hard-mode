@@ -99,7 +99,7 @@ describe("DummyChallenge (base methods in Challenge)", () => {
 	test("handleKeyEvent dispatches based on key", () => {
 		challenge.handleSpace = jest.fn();
 		challenge.handleBackspace = jest.fn();
-		challenge.handleSubmit = jest.fn();
+		challenge.handleEnter = jest.fn();
 		const spaceEvent = new KeyboardEvent("keydown", { key: " " });
 		challenge.handleKeyEvent(spaceEvent);
 		expect(challenge.handleSpace).toHaveBeenCalled();
@@ -110,6 +110,6 @@ describe("DummyChallenge (base methods in Challenge)", () => {
 
 		const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
 		challenge.handleKeyEvent(enterEvent);
-		expect(challenge.handleSubmit).toHaveBeenCalled();
+		expect(challenge.handleEnter).toHaveBeenCalled();
 	});
 });
