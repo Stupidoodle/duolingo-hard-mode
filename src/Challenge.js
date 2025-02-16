@@ -60,10 +60,6 @@ export class Challenge{
 
 		let words = inputField.value.trim().split(/\s+/);
 
-		if(words.length === 0){
-			return [];
-		}
-
 		for(const word of [...words]){
 			if(word.includes("'")){
 				if(Array.from(this.wordBank.wordMap.keys()).some(word =>
@@ -160,13 +156,6 @@ export class Challenge{
 
 				this.remainingChoices.selectWord(firstMatchingKey).click();
 				this.remainingChoices.selectWord(secondMatchingKey).click();
-				this.elements.inputField.value += " ";
-			}
-			else if(firstMatchingKey){
-				// NOTE: This could lead to unexpected behaviour
-				console.debug(`Selected ${firstMatchingKey}`);
-
-				this.remainingChoices.selectWord(firstMatchingKey).click();
 				this.elements.inputField.value += " ";
 			}
 			else if(secondMatchingKey){
@@ -267,6 +256,7 @@ export class Challenge{
 	 * Handles apostrophe key event
 	 */
 	handleApostrophe(){
+		this.elements.inputField.value += "'";
 		let userInput = this.elements.inputField.value.trim().split(/\s+/).pop().toLowerCase();
 
 		if(!userInput)
@@ -278,7 +268,6 @@ export class Challenge{
 			console.debug(`Selected ${matchingKey}`);
 
 			this.remainingChoices.selectWord(matchingKey).click();
-			this.elements.inputField.value += "'";
 
 			this.handleSpace = this.handleSpaceAfterApostrophe;
 		}
