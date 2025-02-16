@@ -42,6 +42,7 @@ function createDummyChallengeDiv() {
 describe("DummyChallenge extra branches (Challenge.js)", () => {
 	let challengeDiv, eventManager, challenge;
 	beforeEach(() => {
+		jest.useFakeTimers();
 		document.body.innerHTML = "";
 		challengeDiv = createDummyChallengeDiv();
 		eventManager = new ExtensionEventManager();
@@ -66,6 +67,9 @@ describe("DummyChallenge extra branches (Challenge.js)", () => {
 		);
 		// Also, the input field’s style should have been modified.
 		expect(challenge.elements.inputField.style.border).toBe("2px solid red");
+		expect(challenge.elements.inputField.style.animation).toBe("shake 0.3s");
+		jest.runAllTimers();
+		expect(challenge.elements.inputField.style.animation).toBe("");
 		// Clean up spy.
 		warnSpy.mockRestore();
 	});
