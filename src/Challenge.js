@@ -147,6 +147,23 @@ export class Challenge{
 	}
 
 	/**
+	 * Handles enter key event
+	 */
+	handleEnter(){
+		let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase()
+
+		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
+
+		if(matchingKey){
+			console.debug(`Selected ${matchingKey}`);
+
+			this.remainingChoices.selectWord(matchingKey)?.click();
+		}
+		this.handleSubmit();
+		this.cleanup();
+	}
+
+	/**
 	 * Handles key events
 	 * @param {KeyboardEvent} event - Keyboard event
 	 */
@@ -160,17 +177,7 @@ export class Challenge{
 			this.handleBackspace();
 		}
 		else if(key === "Enter"){
-			let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase()
-
-			const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
-
-			if(matchingKey){
-				console.debug(`Selected ${matchingKey}`);
-
-				this.remainingChoices.selectWord(matchingKey)?.click();
-			}
-			this.handleSubmit();
-			this.cleanup();
+			this.handleEnter();
 		}
 	}
 
