@@ -30,14 +30,15 @@ export class ChallengeTranslate extends Challenge{
 	handleBackspace(){
 		let removedWord = null;
 
-		let words = this.cleanInputText()
-		let normalizedWords = window.ignoreAccentsEnabled ?
-			words.map(word => normalizeText(word)) :
-			words;
+		let words = this.cleanInputText();
 
 		if(words.length === 0){
 			return;
 		}
+
+		let normalizedWords = window.ignoreAccentsEnabled ?
+			words.map(word => normalizeText(word)) :
+			words;
 
 		for(const word of this.wordBank.wordMap.keys()){
 			const normalizedWord = window.ignoreAccentsEnabled ? normalizeText(word) : word;
@@ -57,7 +58,7 @@ export class ChallengeTranslate extends Challenge{
 			const returnedButton = this.remainingChoices.returnLastUsed(removedWord);
 			// Click the only enabled button to make the word available again
 			const dataTestValue = returnedButton.getAttribute("data-test");
-			const activeButton = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
+			const activeButton = [...document.querySelectorAll(`button[data-test="${dataTestValue}"]`)]
 				.find(btn => btn.getAttribute("aria-disabled") === "false");
 
 			if(activeButton){
