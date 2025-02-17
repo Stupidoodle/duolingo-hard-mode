@@ -24,10 +24,22 @@ export class ChoiceBank{
 		];
 
 		return choiceButtons.reduce((map, btn) => {
-			const choice = btn.getAttribute("data-test") !== "challenge-choice" ? btn.querySelector(
+			let choice = null;
+			if(btn.querySelector(
 				'[data-test="challenge-judge-text"]'
-			).textContent.trim().toLowerCase() :
-				btn.querySelector('span[dir="ltr"]').textContent.trim().toLowerCase();
+			)){
+				choice = btn.querySelector(
+					'[data-test="challenge-judge-text"]'
+				).textContent.trim().toLowerCase();
+			}
+			else{
+				// Fallback
+				choice = btn.querySelector('span[dir="ltr"]').textContent.trim().toLowerCase();
+			}
+
+			if(!choice) {
+				throw new Error("Choice text not found");
+			}
 
 			if (!map.has(choice)) {
 				map.set(choice, []);
