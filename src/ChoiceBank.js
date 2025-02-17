@@ -24,7 +24,7 @@ export class ChoiceBank{
 		];
 
 		return choiceButtons.reduce((map, btn) => {
-			let choice = null;
+			let choice;
 			if(btn.querySelector(
 				'[data-test="challenge-judge-text"]'
 			)){
