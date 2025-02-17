@@ -64,13 +64,13 @@ export class ChallengeTapComplete extends Challenge{
 			const dataTestValue = returnedButton.getAttribute("data-test");
 
 			// Get all buttons matching the word
-			console.debug(`Looking for buttons with data-test='${dataTestValue}'`);
-			console.debug(document.querySelectorAll(`button[data-test='${dataTestValue}']`))
+			console.debug(`Looking for buttons with data-test="${dataTestValue}"`);
+			console.debug(document.querySelectorAll(`button[data-test="${dataTestValue}"]`))
 
-			const buttons = [...document.querySelectorAll(`button[data-test='${dataTestValue}']`)]
+			const buttons = [...document.querySelectorAll(`button[data-test="${dataTestValue}"]`)]
 				.filter(btn => {
 					if (btn.getAttribute("aria-disabled") !== "false") return false;
-					const btnWord = btn.querySelector("[data-test='challenge-tap-token-text']")?.textContent.trim();
+					const btnWord = btn.querySelector("[data-test=\"challenge-tap-token-text\"]")?.textContent.trim();
 					const normalizedBtnWord = window.ignoreAccentsEnabled ? normalizeText(btnWord) : btnWord;
 					const normalizedRemovedWord = window.ignoreAccentsEnabled ? normalizeText(removedWord) : removedWord;
 					return normalizedBtnWord.toLowerCase() === normalizedRemovedWord.toLowerCase();
