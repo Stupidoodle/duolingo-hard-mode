@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.10.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.9.1...v0.10.0) (2025-02-17)
+
+
+### Features
+
+* extend challenge type handling to include 'select' closes [#12](https://github.com/Stupidoodle/duolingo-hard-mode/issues/12) ([68f3199](https://github.com/Stupidoodle/duolingo-hard-mode/commit/68f3199a37cc4399fc75ca39b4fdf99a3d2845e2))
+
+
+### Bug Fixes
+
+* append space to user input in handleSpace method fixes [#18](https://github.com/Stupidoodle/duolingo-hard-mode/issues/18) ([404d771](https://github.com/Stupidoodle/duolingo-hard-mode/commit/404d771ce891bf4cc48ba3207fe6ff5059c4493a))
+* update choice selection logic to handle different data-test attributes ([947f93f](https://github.com/Stupidoodle/duolingo-hard-mode/commit/947f93fe679bae23ec0d5c935cb7b33ee1e861bd))
+
 ### [0.9.1](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.9.0...v0.9.1) (2025-02-17)
 
 
