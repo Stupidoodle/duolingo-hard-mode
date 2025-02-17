@@ -24,9 +24,10 @@ export class ChoiceBank{
 		];
 
 		return choiceButtons.reduce((map, btn) => {
-			const choice = btn.querySelector(
+			const choice = btn.getAttribute("data-test") !== "challenge-choice" ? btn.querySelector(
 				'[data-test="challenge-judge-text"]'
-			).textContent.trim().toLowerCase();
+			).textContent.trim().toLowerCase() :
+				btn.querySelector('span[dir="ltr"]').textContent.trim().toLowerCase();
 
 			if (!map.has(choice)) {
 				map.set(choice, []);
