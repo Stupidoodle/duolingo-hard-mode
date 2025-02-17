@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.10.1](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.10.0...v0.10.1) (2025-02-17)
+
+
+### Bug Fixes
+
+* improve choice selection logic to handle missing text and add error handling ([03c8561](https://github.com/Stupidoodle/duolingo-hard-mode/commit/03c85610fcb08919241c254b7ce5f9598fd58a6d))
+
 ## [0.10.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.9.1...v0.10.0) (2025-02-17)
 
 
