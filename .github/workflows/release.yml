@@ -9,7 +9,7 @@ on:
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true || github.event.workflow_dispatch == true # Ensures the job only runs on merge or manual trigger
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
