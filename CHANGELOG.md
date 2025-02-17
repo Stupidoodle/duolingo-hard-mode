@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.10.1...v1.0.0) (2025-02-17)
+
+
+### Features
+
+* extend challenge type handling to include selectTranscription ([4c53817](https://github.com/Stupidoodle/duolingo-hard-mode/commit/4c53817f7b0d6a9b5a44db05a5bb6ca696cf55b4))
+
 ### [0.10.1](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.10.0...v0.10.1) (2025-02-17)
 
 
