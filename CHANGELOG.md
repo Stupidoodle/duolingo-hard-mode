@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.1](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.0.0...v1.0.1) (2025-02-17)
+
+
+### Bug Fixes
+
+* add handling for single quote key in challenge input ([fdf420e](https://github.com/Stupidoodle/duolingo-hard-mode/commit/fdf420ef8d6382a3fd44ad502b39fa716cae7a07))
+
 ## [1.0.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.10.1...v1.0.0) (2025-02-17)
 
 
