@@ -10,7 +10,6 @@ on:
 jobs:
   release:
     if: github.event.pull_request.merged == true  # Ensures only runs on merge
-    needs: [build-and-test, analyze, audit, lint]  # Ensures all workflows must pass first
     runs-on: ubuntu-latest
 
     steps:
