@@ -165,6 +165,12 @@ export class Challenge{
 				this.remainingChoices.selectWord(secondMatchingKey).click();
 				this.elements.inputField.value += " ";
 			}
+			else if(getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled)){
+				console.debug(`Selected ${userInput}`);
+
+				this.remainingChoices.selectWord(userInput).click();
+				this.elements.inputField.value += " ";
+			}
 			else{
 				console.warn(`Word ${userInput} not found in choices ${Array.from(this.remainingChoices.wordMap.keys())}`);
 
