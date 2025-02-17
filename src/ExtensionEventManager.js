@@ -13,7 +13,7 @@ export class ExtensionEventManager{
 			event.stopPropagation();
 			event.stopImmediatePropagation();
 
-			if([' ', 'Backspace', 'Enter'].includes(event.key)) {
+			if([' ', 'Backspace', 'Enter', "'"].includes(event.key)) {
 				event.preventDefault();
 				const challengeId = textarea.dataset.challengeId;
 				const challenge = this.activeChallenges.get(challengeId);

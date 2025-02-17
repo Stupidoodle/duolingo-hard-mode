@@ -483,6 +483,9 @@ export class ChallengeGapFill{
 
 			this.elements.inputField.value = this.elements.inputField.value.slice(0, -1);
 		}
+		else if(key === "'"){
+			this.elements.inputField.value += "'";
+		}
 	}
 
 	/**
