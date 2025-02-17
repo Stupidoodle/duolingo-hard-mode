@@ -491,6 +491,8 @@ export class ChallengeGapFill{
 	handleSpace(){
 		let userInput = this.elements.inputField.value.trim().toLowerCase();
 
+		this.elements.inputField.value += " ";
+
 		if(!userInput){
 			return;
 		}
@@ -508,8 +510,6 @@ export class ChallengeGapFill{
 				}
 			});
 			this.choiceBank.choiceMap.get(matchingKey)[0].style.display = "flex";
-
-			this.elements.inputField.value += " ";
 
 			this.elements.inputField.style.border = "2px solid green";
 			this.elements.inputField.style.animation = "shake 0.3s";
