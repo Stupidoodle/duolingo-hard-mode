@@ -20,6 +20,7 @@ eventManager.initGlobalKeyCapture();
 
 ChallengeFactory.register("translate", ChallengeTranslate);
 ChallengeFactory.register("tapComplete", ChallengeTapComplete);
+ChallengeFactory.register("listenTap", ChallengeTapComplete);
 
 let extensionEnabled = true;
 let activeChallenge = null;
@@ -1147,7 +1148,7 @@ function enforceTyping(){
 
 	const challengeType = challengeDiv.getAttribute("data-test").replace("challenge challenge-", "")
 
-	if(["listenTap", "completeReverseTranslation"].includes(challengeType)){
+	if(["completeReverseTranslation"].includes(challengeType)){
 		return;
 	}
 
