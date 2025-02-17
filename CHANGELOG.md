@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.1](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.9.0...v0.9.1) (2025-02-17)
+
+
+### Bug Fixes
+
+* add user input handling for matching words in remaining choices in apostrophe case ([428643a](https://github.com/Stupidoodle/duolingo-hard-mode/commit/428643a5420dea28b9967ebf6914e249bd5f3c3b))
+* standardize quotes in data-test attribute selectors ([fe8546a](https://github.com/Stupidoodle/duolingo-hard-mode/commit/fe8546a2b1c42a2150fa1a0f7fc135bf2f52b2c7))
+
 ## [0.9.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.8.0...v0.9.0) (2025-02-17)
 
 
