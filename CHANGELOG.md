@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.8.0...v0.9.0) (2025-02-17)
+
+
+### Features
+
+* register listenTap challenge and update challenge type check ([10e71d0](https://github.com/Stupidoodle/duolingo-hard-mode/commit/10e71d0b10829749e2e0c550ad03d697f1b55153))
+
+
+### Bug Fixes
+
+* streamline input handling by removing unnecessary checks and improving apostrophe event processing ([dd1ca03](https://github.com/Stupidoodle/duolingo-hard-mode/commit/dd1ca03496ddd02235f7fb9469bfd78b6d9beb7d))
+* update key event handling to use handleEnter instead of handleSubmit ([49db452](https://github.com/Stupidoodle/duolingo-hard-mode/commit/49db4529509cbd5e5bbe4ef1c019945bb4b92290))
+
 ## [0.8.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v0.7.0...v0.8.0) (2025-02-16)
 
 
