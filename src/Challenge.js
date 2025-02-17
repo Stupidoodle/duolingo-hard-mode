@@ -238,7 +238,7 @@ export class Challenge{
 		if(matchingKeyAfterApostrophe){
 			console.debug(`Selected ${matchingKeyAfterApostrophe}`);
 
-			this.remainingChoices.selectWord(matchingKeyAfterApostrophe).click();
+			this.remainingChoices.selectWord(matchingKeyAfterApostrophe)?.click();
 			this.elements.inputField.value += " ";
 
 			// This is not silly wtf
@@ -304,6 +304,12 @@ export class Challenge{
 			this.handleBackspace();
 		}
 		else if(key === "Enter"){
+			if(Array.from(this.remainingChoices.wordMap.keys()).some(word =>
+				typeof word === "string" && word.includes("'"))){
+				this.handleSpace();
+				this.handleSubmit();
+				this.cleanup();
+			}
 			this.handleEnter();
 		}
 		else if(key === "'"){
@@ -690,7 +696,7 @@ export class Challenge{
 			e.stopImmediatePropagation();
 
 			// Handle special keys through our system
-			if([' ', 'Backspace', 'Enter'].includes(e.key)) {
+			if([' ', 'Backspace', 'Enter', "'"].includes(e.key)) {
 				e.preventDefault();
 				this.handleKeyEvent(e);
 			}

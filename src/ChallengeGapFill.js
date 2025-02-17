@@ -443,7 +443,7 @@ export class ChallengeGapFill{
 			e.stopImmediatePropagation();
 
 			// Handle special keys through our system
-			if ([' ', 'Backspace', 'Enter'].includes(e.key)) {
+			if ([' ', 'Backspace', 'Enter', "'"].includes(e.key)) {
 				e.preventDefault();
 				this.handleKeyEvent(e);
 			}
