@@ -155,7 +155,8 @@ export class Challenge{
 				console.debug(`Selected ${firstMatchingKey} and ${secondMatchingKey}`);
 
 				this.remainingChoices.selectWord(firstMatchingKey).click();
-				this.remainingChoices.selectWord(secondMatchingKey).click();
+				//FIXME
+				this.remainingChoices.selectWord(secondMatchingKey)?.click();
 				this.elements.inputField.value += " ";
 			}
 			else if(secondMatchingKey){
