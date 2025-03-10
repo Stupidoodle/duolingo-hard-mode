@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.1.0...v1.2.0) (2025-03-10)
+
+
+### Features
+
+* add default popup and storage permission to manifest.json ([32bc833](https://github.com/Stupidoodle/duolingo-hard-mode/commit/32bc833e9d11938e5d1a8f3f23676001fdc4a8a6))
+* implement popup controls for Hard Mode and Accents, with storage settings ([bf1aa2a](https://github.com/Stupidoodle/duolingo-hard-mode/commit/bf1aa2af950981eed71d487a74abb28050c1c0a9))
+* update webpack configuration to support multiple entry points and add plugins for HTML generation and asset copying ([7ef72a3](https://github.com/Stupidoodle/duolingo-hard-mode/commit/7ef72a31eb3718a6c8eed5f6abecbd76b68dc96e))
+
+## [1.1.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.0.5...v1.1.0) (2025-03-10)
+
+
+### Features
+
+* enhance release process with token refresh and upload to Chrome Web Store ([38b3646](https://github.com/Stupidoodle/duolingo-hard-mode/commit/38b3646ca88f768df3725875fae3b399dad89553))
+
 ### [1.0.5](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.0.4...v1.0.5) (2025-02-22)
 
 ### [1.0.4](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.0.3...v1.0.4) (2025-02-22)

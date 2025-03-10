@@ -108,8 +108,8 @@ function toggleExtension() {
 	const toggleSpan = document.getElementById("duo-hard-mode-span");
 
 	if(extensionEnabled){
-		toggleSpan.textContent = "Disable Hard";
-		toggleButton.style.cssText = CONSTANTS.STYLE.ACTIVE;
+        if (toggleSpan) toggleSpan.textContent = "Disable Hard";
+        if (toggleButton) toggleButton.style.cssText = CONSTANTS.STYLE.ACTIVE;
 
 		const processedDivs = document.querySelectorAll("[data-extension-processed='true']");
 		processedDivs.forEach(div => div.removeAttribute("data-extension-processed"));
@@ -117,8 +117,8 @@ function toggleExtension() {
 		initObserver();
 	}
 	else{
-		toggleButton.style.cssText = CONSTANTS.STYLE.INACTIVE;
-		toggleSpan.textContent = "Enable Hard";
+        if (toggleButton) toggleButton.style.cssText = CONSTANTS.STYLE.INACTIVE;
+        if (toggleSpan) toggleSpan.textContent = "Enable Hard";
 		// Disconnect observer, cleanup any active challenge:
 		observer.disconnect();
 		activeChallenge?.cleanup();
@@ -130,58 +130,92 @@ function toggleExtension() {
  * Creates and injects the toggle button into the DOM.
  */
 function createToggleButton() {
-	// Check if we’ve already created it (avoid duplicates):
-	if (document.getElementById("duo-hard-mode-toggle")) {
-		return;
-	}
+    chrome.storage.sync.get(['showOnPageControls'], function(data) {
+        if (!data.showOnPageControls) return;
 
-	const button = document.createElement("button");
-	button.id = "duo-hard-mode-toggle";
-	button.style.cssText = CONSTANTS.STYLE.ACTIVE;
+        if (document.getElementById('duo-hard-mode-toggle')) {
+            return;
+        }
 
-	const span = document.createElement("span")
-	span.id = "duo-hard-mode-span"
-	span.textContent = "Disable Hard";
-	span.style.cssText = CONSTANTS.STYLE.SPAN;
+        const button = document.createElement('button');
+        button.id = 'duo-hard-mode-toggle';
+        button.style.cssText = CONSTANTS.STYLE.ACTIVE;
 
-	button.appendChild(span);
-	button.addEventListener("click", toggleExtension);
-	document.body.appendChild(button);
+        const span = document.createElement('span');
+        span.id = 'duo-hard-mode-span';
+        span.textContent = 'Disable Hard';
+        span.style.cssText = CONSTANTS.STYLE.SPAN;
+
+        button.appendChild(span);
+        button.addEventListener('click', toggleExtension);
+        document.body.appendChild(button);
+    });
 }
 
 /**
  * Creates and injects ignore accents button into the DOM.
  */
-function createIgnoreAccentsToggleButton(){
-	if(document.getElementById("duo-ignore-accents-toggle")){
-		return;
-	}
+function createIgnoreAccentsToggleButton() {
+    chrome.storage.sync.get(['showOnPageControls'], function(data) {
+        if (!data.showOnPageControls) return;
 
-	const button = document.createElement("button");
-	button.id = "duo-ignore-accents-toggle";
-	button.style.cssText = CONSTANTS.STYLE.ACTIVE;
+        if (document.getElementById('duo-ignore-accents-toggle')) {
+            return;
+        }
 
-	button.style.top = "70px";
+        const button = document.createElement('button');
+        button.id = 'duo-ignore-accents-toggle';
+        button.style.cssText = CONSTANTS.STYLE.ACTIVE;
+        button.style.top = '70px';
 
-	const span = document.createElement("span")
-	span.id = "duo-ignore-accents-span"
-	span.textContent = "Disable Accents";
-	span.style.cssText = CONSTANTS.STYLE.SPAN;
+        const span = document.createElement('span');
+        span.id = 'duo-ignore-accents-span';
+        span.textContent = 'Disable Accents';
+        span.style.cssText = CONSTANTS.STYLE.SPAN;
 
-	button.appendChild(span);
+        button.appendChild(span);
 
-	button.addEventListener("click", () => {
-		window.ignoreAccentsEnabled = !window.ignoreAccentsEnabled;
-		span.textContent = window.ignoreAccentsEnabled ? "Enable Accents" : "Disable Accents";
+        button.addEventListener('click', () => {
+            window.ignoreAccentsEnabled = !window.ignoreAccentsEnabled;
+            span.textContent = window.ignoreAccentsEnabled ? 'Enable Accents' : 'Disable Accents';
+            button.style.cssText = window.ignoreAccentsEnabled ? CONSTANTS.STYLE.INACTIVE : CONSTANTS.STYLE.ACTIVE;
+            button.style.top = '70px';
+        });
 
-		button.style.cssText = window.ignoreAccentsEnabled ? CONSTANTS.STYLE.INACTIVE : CONSTANTS.STYLE.ACTIVE;
-		button.style.top = "70px";
-	});
-
-	document.body.appendChild(button);
+        document.body.appendChild(button);
+    });
 }
 
-createIgnoreAccentsToggleButton()
-createToggleButton();
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (request.action === 'toggleExtension') {
+        toggleExtension();
+    } else if (request.action === 'toggleIgnoreAccents') {
+        window.ignoreAccentsEnabled = request.enabled;
+		const ignoreAccentsButton = document.getElementById('duo-ignore-accents-toggle');
+		const ignoreAccentsSpan = document.getElementById('duo-ignore-accents-span');
+		if (ignoreAccentsButton) {
+			ignoreAccentsButton.style.cssText = request.enabled ? CONSTANTS.STYLE.INACTIVE : CONSTANTS.STYLE.ACTIVE;
+			ignoreAccentsSpan.textContent = request.enabled ? 'Enable Accents' : 'Disable Accents';
+			ignoreAccentsButton.style.top = '70px';
+		}
+    } else if (request.action === 'toggleOnPageControls') {
+        const toggleButton = document.getElementById('duo-hard-mode-toggle');
+        const ignoreAccentsButton = document.getElementById('duo-ignore-accents-toggle');
+        if (request.enabled) {
+            if (!toggleButton) createToggleButton();
+            if (!ignoreAccentsButton) createIgnoreAccentsToggleButton();
+        } else {
+            if (toggleButton) toggleButton.remove();
+            if (ignoreAccentsButton) ignoreAccentsButton.remove();
+        }
+    }
+});
 
+chrome.storage.sync.get(['showOnPageControls'], function(result) {
+    const showControls = result.showOnPageControls;
+	if(showControls){
+		createToggleButton();
+		createIgnoreAccentsToggleButton();
+	}
+});
 initObserver();
