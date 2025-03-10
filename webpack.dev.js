@@ -1,10 +1,15 @@
 const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
 	mode: "development",
-	entry: "./src/content.js",
+	entry: {
+		content: "./src/content.js", // Your main content script
+		popup: "./src/popup.js",    // Popup script
+	},
 	output: {
-		filename: "content.bundle.js",
+		filename: "[name].bundle.js", // Outputs content.bundle.js and popup.bundle.js
 		path: path.resolve(__dirname, "dist"),
 	},
 	devtool: "source-map", // Enables better debugging
@@ -30,4 +35,18 @@ module.exports = {
 	optimization: {
 		minimize: false, // Disable minification for better debugging
 	},
+	plugins: [
+		// Generates popup.html from the template
+		new HtmlWebpackPlugin({
+			template: "./src/popup.html", // Path to your popup HTML template
+			filename: "popup.html",       // Output file name
+			chunks: ["popup"],            // Only include the popup bundle
+		}),
+		// Copies static assets (like icons) to the dist folder
+		new CopyWebpackPlugin({
+			patterns: [
+				{ from: "manifest.json", to: "manifest.json" }, // Copy manifest
+			],
+		}),
+	],
 };
