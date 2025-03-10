@@ -39,11 +39,10 @@ jobs:
 
       - name: Zip extension folder
         run: |
-          mkdir extension
-          mkdir extension/dist
+          mkdir -p extension/dist
           cp manifest.json extension/
-          cp dist/content.bundle.js extension/dist/
-          zip -r "duolingo-hard-mode.zip" extension
+          cp -r dist/* extension/dist/
+          zip -r "extension.zip" extension
 
       - name: Create GitHub Release
         id: create_release
@@ -63,6 +62,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: duolingo-hard-mode.zip
-          asset_name: duolingo-hard-mode.zip
+          asset_path: extension.zip
+          asset_name: extension.zip
           asset_content_type: application/zip
+
+      - name: Refresh Access Token
+        id: refresh_token
+        run: |
+          RESPONSE=$(curl -s -X POST \
+            -d "client_id=${{ secrets.CHROME_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.CHROME_CLIENT_SECRET }}" \
+            -d "refresh_token=${{ secrets.CHROME_REFRESH_TOKEN }}" \
+            -d "grant_type=refresh_token" \
+            "https://oauth2.googleapis.com/token")
+          ACCESS_TOKEN=$(echo $RESPONSE | jq -r '.access_token')
+          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
+
+      - name: Upload to Chrome Web Store
+        run: |
+          curl -X PUT \
+            -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+            -H "x-goog-api-version: 2" \
+            -T extension.zip \
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}"
+
+      - name: Publish to Chrome Web Store
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+            -H "x-goog-api-version: 2" \
+            -H "Content-Length: 0" \
+            "https://www.googleapis.com/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}/publish"
