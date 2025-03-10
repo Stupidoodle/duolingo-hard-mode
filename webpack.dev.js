@@ -1,6 +1,5 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
 	mode: "development",
@@ -41,12 +40,6 @@ module.exports = {
 			template: "./src/popup.html", // Path to your popup HTML template
 			filename: "popup.html",       // Output file name
 			chunks: ["popup"],            // Only include the popup bundle
-		}),
-		// Copies static assets (like icons) to the dist folder
-		new CopyWebpackPlugin({
-			patterns: [
-				{ from: "manifest.json", to: "manifest.json" }, // Copy manifest
-			],
 		}),
 	],
 };
