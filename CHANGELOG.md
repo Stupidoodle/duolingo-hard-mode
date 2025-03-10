@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.0.5...v1.1.0) (2025-03-10)
+
+
+### Features
+
+* enhance release process with token refresh and upload to Chrome Web Store ([38b3646](https://github.com/Stupidoodle/duolingo-hard-mode/commit/38b3646ca88f768df3725875fae3b399dad89553))
+
 ### [1.0.5](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.0.4...v1.0.5) (2025-02-22)
 
 ### [1.0.4](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.0.3...v1.0.4) (2025-02-22)
