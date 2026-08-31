@@ -231,21 +231,58 @@ export class Challenge{
 	}
 
 	/**
+	 * Returns every bubble the input no longer accounts for.
+	 *
+	 * Each pass hands one button back to the pool, so the used count falls and
+	 * the loop terminates.
+	 *
+	 * @param {String[]} words - words currently spelled out in the input
+	 */
+	releaseWords(words){
+		let releasedWord;
+
+		while((releasedWord = this.findReleasedWord(words)) !== null){
+			console.debug(`Re-enabling ${releasedWord}`);
+
+			const availableBefore = this.remainingChoices.wordMap.get(releasedWord)?.length ?? 0;
+
+			this.remainingChoices.returnLastUsed(releasedWord);
+			this.findAnswerButton(releasedWord)?.click();
+
+			// Handing the button back is what shrinks the used count. If the pool
+			// did not actually grow — it has no record of this word — the next
+			// pass would pick the same word again and spin forever.
+			if((this.remainingChoices.wordMap.get(releasedWord)?.length ?? 0) === availableBefore){
+				break;
+			}
+		}
+	}
+
+	/**
 	 * Handles backspace key event by returning the bubble of the word that the
 	 * deletion just broke up.
 	 */
 	handleBackspace(){
-		const words = this.cleanInputText();
-		const releasedWord = this.findReleasedWord(words);
+		this.releaseWords(this.cleanInputText());
+	}
 
-		if(!releasedWord){
-			return;
-		}
+	/**
+	 * Handles ctrl/alt + backspace by deleting the whole trailing word, the way
+	 * every other text input on the platform does.
+	 *
+	 * The space that separated the deleted word from the previous one stays, so
+	 * the next word can be typed straight away.
+	 */
+	handleCtrlBackspace(){
+		const inputField = this.elements.inputField;
+		const withoutTrailingSpace = inputField.value.replace(/\s+$/, "");
+		const lastBoundary = withoutTrailingSpace.lastIndexOf(" ");
 
-		console.debug(`Re-enabling ${releasedWord}`);
+		inputField.value = lastBoundary === -1
+			? ""
+			: withoutTrailingSpace.slice(0, lastBoundary + 1);
 
-		this.remainingChoices.returnLastUsed(releasedWord);
-		this.findAnswerButton(releasedWord)?.click();
+		this.releaseWords(this.splitWords(inputField.value));
 	}
 
 	/**
@@ -416,7 +453,13 @@ export class Challenge{
 			this.handleSpace();
 		}
 		else if(key === "Backspace"){
-			this.handleBackspace();
+			// Alt is the macOS equivalent of the ctrl+backspace word delete.
+			if(event.ctrlKey || event.altKey){
+				this.handleCtrlBackspace();
+			}
+			else{
+				this.handleBackspace();
+			}
 		}
 		else if(key === "Enter"){
 			if(Array.from(this.remainingChoices.wordMap.keys()).some(word =>
