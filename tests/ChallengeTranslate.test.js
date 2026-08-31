@@ -67,10 +67,16 @@ describe("ChallengeTranslate", () => {
 		// Remove one instance from remainingChoices for the word "test"
 		challenge.remainingChoices.wordMap.get("test").pop();
 
-		// Create a dummy DOM button element
+		// The bubble in the answer area. Since issue #31 the word is located by the
+		// token's own text, so this has to be a real tap token — the previous
+		// `data-test="dummy"` marker is exactly what the fix stopped relying on.
 		const dummyBtn = document.createElement("button");
-		dummyBtn.setAttribute("data-test", "dummy");
+		dummyBtn.setAttribute("data-test", "challenge-tap-token");
 		dummyBtn.setAttribute("aria-disabled", "false");
+		const dummySpan = document.createElement("span");
+		dummySpan.setAttribute("data-test", "challenge-tap-token-text");
+		dummySpan.textContent = "test";
+		dummyBtn.appendChild(dummySpan);
 		// Spy on the button's click method
 		dummyBtn.click = jest.fn();
 
