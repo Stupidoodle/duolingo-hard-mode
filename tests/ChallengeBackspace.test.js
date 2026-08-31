@@ -18,9 +18,12 @@ describe("issue #31 — backspace returns the correct word bubble", () => {
 		window.ignoreAccentsEnabled = false;
 	});
 
-	test("translate returns the deleted word, not the first enabled bubble", () => {
-		// "agua" is still in the bank and enabled, so it is the first enabled token
-		// in the document — clicking it would ADD a word instead of removing one.
+	// Guard rather than a regression: Duolingo prefixes each token's word onto
+	// its data-test, so the old lookup by that attribute already landed on the
+	// right word. It only broke down for repeated words, which the tests below
+	// cover. This pins the invariant that a word-bank bubble is never clicked —
+	// doing so would ADD a word instead of removing one.
+	test("translate returns the deleted word and never a word-bank bubble", () => {
 		const { challenge, answerTokens, clicked } = buildChallenge(
 			ChallengeTranslate,
 			"translate",

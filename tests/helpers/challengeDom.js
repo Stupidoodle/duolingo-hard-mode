@@ -18,7 +18,11 @@ import { WordBank } from "../../src/WordBank.js";
  */
 export function createToken(word, enabled) {
 	const btn = document.createElement("button");
-	btn.setAttribute("data-test", "challenge-tap-token");
+	// Duolingo prefixes the token's word onto the attribute, e.g.
+	// data-test="gato-challenge-tap-token" — verified against a live lesson.
+	// WordBank's `[data-test*='challenge-tap-token']` substring match is what
+	// copes with that.
+	btn.setAttribute("data-test", `${word}-challenge-tap-token`);
 	btn.setAttribute("aria-disabled", enabled ? "false" : "true");
 
 	const span = document.createElement("span");
