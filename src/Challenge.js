@@ -69,7 +69,32 @@ export class Challenge{
 
 		inputField.value = text.substring(0, text.length - 1);
 
-		let words = inputField.value.trim().split(/\s+/);
+		let words = this.splitWords(inputField.value);
+
+		if(text.endsWith(" ") && words.length > 0) {
+			words.pop();
+		}
+
+		return words;
+	}
+
+	/**
+	 * Splits typed text into the words the word bank is keyed by.
+	 *
+	 * A bank that holds a contraction as two bubbles ("l'" + "eau") needs the
+	 * typed word split at the apostrophe to line up with them.
+	 *
+	 * @param {String} text
+	 * @returns {String[]} Array of words
+	 */
+	splitWords(text){
+		const trimmed = text.trim();
+
+		if(trimmed.length === 0){
+			return [];
+		}
+
+		let words = trimmed.split(/\s+/);
 
 		for(const word of [...words]){
 			if(word.includes("'")){
@@ -92,10 +117,6 @@ export class Challenge{
 					words.splice(words.indexOf(firstPart) + 1, 0, secondPart);
 				}
 			}
-		}
-
-		if(text.endsWith(" ") && words.length > 0) {
-			words.pop();
 		}
 
 		return words;
