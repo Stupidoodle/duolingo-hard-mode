@@ -29,10 +29,18 @@ export class ExtensionEventManager{
 		}, true);
 
 		document.addEventListener('input', (e) => {
-			if(e.target.closest("textarea[data-extension='true']")) {
-				e.stopPropagation();
-				e.stopImmediatePropagation();
+			const textarea = e.target.closest("textarea[data-extension='true']");
+			if(!textarea){
+				return;
 			}
+
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+
+			// Stopping the event here also keeps it from reaching listeners on the
+			// textarea itself, so the challenge has to be called from this handler.
+			const challenge = this.activeChallenges.get(textarea.dataset.challengeId);
+			challenge?.handleInput?.();
 		}, true);
 	}
 

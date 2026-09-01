@@ -288,9 +288,97 @@ export class Challenge{
 	}
 
 	/**
+	 * How many bubbles of a word are currently placed in the answer.
+	 * @param {String} word - Word bank key
+	 * @returns {Number}
+	 */
+	usedCount(word){
+		const total = this.wordBank.wordMap.get(word)?.length ?? 0;
+		const remaining = this.remainingChoices.wordMap.get(word)?.length ?? 0;
+
+		return total - remaining;
+	}
+
+	/**
+	 * Whether the word being typed has already claimed its bubble.
+	 *
+	 * Compares copies in use against copies the text spells out, so a repeated
+	 * word can still claim a second bubble.
+	 *
+	 * @returns {Boolean}
+	 */
+	isTrailingWordClaimed(){
+		const words = this.splitWords(this.elements.inputField.value);
+		// Not Array.prototype.at: CI still builds on Node 14, which predates it.
+		const token = words[words.length - 1];
+
+		if(!token){
+			return false;
+		}
+
+		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, token, window.ignoreAccentsEnabled);
+
+		if(!matchingKey){
+			return false;
+		}
+
+		const normalizedKey = this.normalizeWord(matchingKey);
+		const spelled = words.filter(word => this.normalizeWord(word) === normalizedKey).length;
+
+		return this.usedCount(matchingKey) >= spelled;
+	}
+
+	/**
+	 * Claims the bubble for the word being typed the moment it matches exactly.
+	 * @returns {void}
+	 */
+	claimTrailingWord(){
+		if(this.isTrailingWordClaimed()){
+			return;
+		}
+
+		const words = this.splitWords(this.elements.inputField.value);
+		// Not Array.prototype.at: CI still builds on Node 14, which predates it.
+		const token = words[words.length - 1];
+
+		if(!token){
+			return;
+		}
+
+		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, token, window.ignoreAccentsEnabled);
+
+		if(!matchingKey){
+			return;
+		}
+
+		console.debug(`Claiming ${matchingKey}`);
+
+		this.remainingChoices.selectWord(matchingKey)?.click();
+	}
+
+	/**
+	 * Handles every keystroke that reaches the input.
+	 *
+	 * Typing on past a match has to give the bubble back before the longer word
+	 * can claim its own — a bank holding both "apple" and "applepie" swaps which
+	 * bubble is held as the extra letters arrive.
+	 */
+	handleInput(){
+		this.releaseWords(this.splitWords(this.elements.inputField.value));
+		this.claimTrailingWord();
+	}
+
+	/**
 	 * Handles space key event
 	 */
 	handleSpace(){
+		// The word may already hold its bubble from live matching, in which case
+		// space only commits it.
+		if(this.isTrailingWordClaimed()){
+			this.elements.inputField.value += " ";
+			return;
+		}
+
 		let userInput = this.elements.inputField.value.trim().split(/\s+/).pop().toLowerCase();
 
 		if(!userInput)
