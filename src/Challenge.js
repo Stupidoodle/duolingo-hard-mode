@@ -4,7 +4,7 @@ import{
 
 import{
 	getMatchingKey,
-	normalizeText
+	normalizeForMatch
 } from "./AccentUtils.js";
 
 import{
@@ -164,8 +164,25 @@ export class Challenge{
 	 * @returns {String}
 	 */
 	normalizeWord(word){
-		const lowered = word.trim().toLowerCase();
-		return window.ignoreAccentsEnabled ? normalizeText(lowered) : lowered;
+		return normalizeForMatch(word.trim(), {
+			ignoreAccents: window.ignoreAccentsEnabled,
+			ignoreApostrophes: window.ignoreApostrophesEnabled
+		});
+	}
+
+	/**
+	 * Resolves typed input to a word bank key, honouring both leniency settings.
+	 * @param {Map<String, *>} map
+	 * @param {String} input
+	 * @returns {String|null}
+	 */
+	matchKey(map, input){
+		return getMatchingKey(
+			map,
+			input,
+			window.ignoreAccentsEnabled,
+			window.ignoreApostrophesEnabled
+		);
 	}
 
 	/**
@@ -316,7 +333,7 @@ export class Challenge{
 			return false;
 		}
 
-		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, token, window.ignoreAccentsEnabled);
+		const matchingKey = this.matchKey(this.remainingChoices.wordMap, token);
 
 		if(!matchingKey){
 			return false;
@@ -345,7 +362,7 @@ export class Challenge{
 			return;
 		}
 
-		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, token, window.ignoreAccentsEnabled);
+		const matchingKey = this.matchKey(this.remainingChoices.wordMap, token);
 
 		if(!matchingKey){
 			return;
@@ -389,8 +406,8 @@ export class Challenge{
 			const firstPart = userInput.slice(0, apostropheIndex);
 			const secondPart = userInput.slice(apostropheIndex);  // includes the apostrophe
 
-			const firstMatchingKey = getMatchingKey(this.remainingChoices.wordMap, firstPart, window.ignoreAccentsEnabled);
-			const secondMatchingKey = getMatchingKey(this.remainingChoices.wordMap, secondPart, window.ignoreAccentsEnabled);
+			const firstMatchingKey = this.matchKey(this.remainingChoices.wordMap, firstPart);
+			const secondMatchingKey = this.matchKey(this.remainingChoices.wordMap, secondPart);
 
 			if(firstMatchingKey && secondMatchingKey){
 				console.debug(`Selected ${firstMatchingKey} and ${secondMatchingKey}`);
@@ -407,7 +424,7 @@ export class Challenge{
 				this.remainingChoices.selectWord(secondMatchingKey).click();
 				this.elements.inputField.value += " ";
 			}
-			else if(getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled)){
+			else if(this.matchKey(this.remainingChoices.wordMap, userInput)){
 				console.debug(`Selected ${userInput}`);
 
 				this.remainingChoices.selectWord(userInput).click();
@@ -426,7 +443,7 @@ export class Challenge{
 			}
 		}
 		else{
-			const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
+			const matchingKey = this.matchKey(this.remainingChoices.wordMap, userInput);
 
 			if (matchingKey) {
 				console.debug(`Selected ${matchingKey}`);
@@ -453,7 +470,7 @@ export class Challenge{
 	handleEnter(){
 		let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase()
 
-		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
+		const matchingKey = this.matchKey(this.remainingChoices.wordMap, userInput);
 
 		if(matchingKey){
 			console.debug(`Selected ${matchingKey}`);
@@ -475,7 +492,7 @@ export class Challenge{
 		}
 
 		let tokenAfterApostrophe = userInput.split("'").pop();
-		const matchingKeyAfterApostrophe = getMatchingKey(this.remainingChoices.wordMap, tokenAfterApostrophe, window.ignoreAccentsEnabled);
+		const matchingKeyAfterApostrophe = this.matchKey(this.remainingChoices.wordMap, tokenAfterApostrophe);
 
 		if(matchingKeyAfterApostrophe){
 			console.debug(`Selected ${matchingKeyAfterApostrophe}`);
@@ -510,7 +527,7 @@ export class Challenge{
 		if(!userInput)
 			return;
 
-		const matchingKey = getMatchingKey(this.remainingChoices.wordMap, userInput, window.ignoreAccentsEnabled);
+		const matchingKey = this.matchKey(this.remainingChoices.wordMap, userInput);
 
 		if(matchingKey){
 			console.debug(`Selected ${matchingKey}`);
