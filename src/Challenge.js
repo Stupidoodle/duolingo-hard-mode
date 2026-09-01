@@ -227,7 +227,9 @@ export class Challenge{
 				return text != null && this.normalizeWord(text) === target;
 			});
 
-		return matches.at(-1) ?? null;
+		// Index arithmetic rather than Array.prototype.at: CI still builds on
+		// Node 14, which predates it.
+		return matches.length > 0 ? matches[matches.length - 1] : null;
 	}
 
 	/**
