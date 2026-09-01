@@ -3,7 +3,8 @@ import{
 } from "./ExtensionEventManager.js"
 
 import{
-	getMatchingKey
+	getMatchingKey,
+	normalizeText
 } from "./AccentUtils.js";
 
 import{
@@ -137,11 +138,95 @@ export class Challenge{
 	}
 
 	/**
-	 * Handles backspace key event
-	 * @abstract
+	 * Normalizes a word for comparison, honouring the accent setting.
+	 * @param {String} word
+	 * @returns {String}
+	 */
+	normalizeWord(word){
+		const lowered = word.trim().toLowerCase();
+		return window.ignoreAccentsEnabled ? normalizeText(lowered) : lowered;
+	}
+
+	/**
+	 * Finds the word whose bubble should be returned to the word bank.
+	 *
+	 * A word is released once the answer holds more copies of it than the input
+	 * still spells out. Comparing counts rather than mere presence is what makes
+	 * repeated words work: typing "el perro el" and deleting the trailing "el"
+	 * has to release a bubble even though "el" still appears earlier in the text.
+	 *
+	 * @param {String[]} words - words currently spelled out in the input
+	 * @returns {String|null} The word bank key to release, or null if none
+	 */
+	findReleasedWord(words){
+		const typed = words.map(word => this.normalizeWord(word));
+
+		for(const [word, buttons] of this.wordBank.wordMap){
+			const remaining = this.remainingChoices.wordMap.get(word)?.length ?? 0;
+			const used = buttons.length - remaining;
+
+			if(used <= 0){
+				continue;
+			}
+
+			const normalizedWord = this.normalizeWord(word);
+			const stillTyped = typed.filter(candidate => candidate === normalizedWord).length;
+
+			if(used > stillTyped){
+				return word;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Finds the bubble to click in order to send `word` back to the word bank.
+	 *
+	 * Every bubble carries the same `data-test="challenge-tap-token"`, so that
+	 * attribute cannot identify one — only the token's own text can. Bubbles
+	 * inside the word bank are excluded because clicking those *adds* a word.
+	 * The last remaining match is the most recently placed one, which mirrors
+	 * the LIFO order `WordBank.returnLastUsed` pops.
+	 *
+	 * @param {String} word - Word bank key to return
+	 * @returns {HTMLButtonElement|null}
+	 */
+	findAnswerButton(word){
+		const target = this.normalizeWord(word);
+		const wordBankDiv = this.elements.wordBank;
+
+		const matches = [...document.querySelectorAll("button[data-test*='challenge-tap-token']")]
+			.filter(button => button.getAttribute("aria-disabled") === "false")
+			.filter(button => !wordBankDiv?.contains(button))
+			.filter(button => {
+				const text = button
+					.querySelector("[data-test='challenge-tap-token-text']")
+					?.textContent;
+				return text != null && this.normalizeWord(text) === target;
+			});
+
+		// Index arithmetic rather than Array.prototype.at: CI still builds on
+		// Node 14, which predates it.
+		return matches.length > 0 ? matches[matches.length - 1] : null;
+	}
+
+	/**
+	 * Handles backspace key event by returning the bubble of the word that the
+	 * deletion just broke up.
 	 */
 	handleBackspace(){
-		throw new Error("Method not implemented");
+		const words = this.cleanInputText();
+		const releasedWord = this.findReleasedWord(words);
+
+		if(!releasedWord){
+			return;
+		}
+
+		console.debug(`Re-enabling ${releasedWord}`);
+
+		this.remainingChoices.returnLastUsed(releasedWord);
+		this.findAnswerButton(releasedWord)?.click();
 	}
 
 	/**

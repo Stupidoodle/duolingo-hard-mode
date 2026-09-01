@@ -113,8 +113,14 @@ describe("DummyChallenge (base methods in Challenge)", () => {
 		expect(challenge.handleKeyEvent).toHaveBeenCalledWith(keydownEvent);
 	})
 
-	test("handleBackspace throws error if not overridden", () => {
-		expect(() => challenge.handleBackspace()).toThrow();
+	// handleBackspace used to be abstract; issue #31 moved the shared
+	// implementation onto Challenge, so the base class handles it directly.
+	test("handleBackspace is implemented on the base class and is a no-op when no word was used", () => {
+		challenge.elements.inputField.value = "word1";
+		const returnSpy = jest.spyOn(challenge.remainingChoices, "returnLastUsed");
+
+		expect(() => challenge.handleBackspace()).not.toThrow();
+		expect(returnSpy).not.toHaveBeenCalled();
 	});
 
 	test("handleSpace selects available word and appends a space", () => {
