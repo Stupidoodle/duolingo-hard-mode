@@ -69,7 +69,32 @@ export class Challenge{
 
 		inputField.value = text.substring(0, text.length - 1);
 
-		let words = inputField.value.trim().split(/\s+/);
+		let words = this.splitWords(inputField.value);
+
+		if(text.endsWith(" ") && words.length > 0) {
+			words.pop();
+		}
+
+		return words;
+	}
+
+	/**
+	 * Splits typed text into the words the word bank is keyed by.
+	 *
+	 * A bank that holds a contraction as two bubbles ("l'" + "eau") needs the
+	 * typed word split at the apostrophe to line up with them.
+	 *
+	 * @param {String} text
+	 * @returns {String[]} Array of words
+	 */
+	splitWords(text){
+		const trimmed = text.trim();
+
+		if(trimmed.length === 0){
+			return [];
+		}
+
+		let words = trimmed.split(/\s+/);
 
 		for(const word of [...words]){
 			if(word.includes("'")){
@@ -92,10 +117,6 @@ export class Challenge{
 					words.splice(words.indexOf(firstPart) + 1, 0, secondPart);
 				}
 			}
-		}
-
-		if(text.endsWith(" ") && words.length > 0) {
-			words.pop();
 		}
 
 		return words;
@@ -212,21 +233,58 @@ export class Challenge{
 	}
 
 	/**
+	 * Returns every bubble the input no longer accounts for.
+	 *
+	 * Each pass hands one button back to the pool, so the used count falls and
+	 * the loop terminates.
+	 *
+	 * @param {String[]} words - words currently spelled out in the input
+	 */
+	releaseWords(words){
+		let releasedWord;
+
+		while((releasedWord = this.findReleasedWord(words)) !== null){
+			console.debug(`Re-enabling ${releasedWord}`);
+
+			const availableBefore = this.remainingChoices.wordMap.get(releasedWord)?.length ?? 0;
+
+			this.remainingChoices.returnLastUsed(releasedWord);
+			this.findAnswerButton(releasedWord)?.click();
+
+			// Handing the button back is what shrinks the used count. If the pool
+			// did not actually grow — it has no record of this word — the next
+			// pass would pick the same word again and spin forever.
+			if((this.remainingChoices.wordMap.get(releasedWord)?.length ?? 0) === availableBefore){
+				break;
+			}
+		}
+	}
+
+	/**
 	 * Handles backspace key event by returning the bubble of the word that the
 	 * deletion just broke up.
 	 */
 	handleBackspace(){
-		const words = this.cleanInputText();
-		const releasedWord = this.findReleasedWord(words);
+		this.releaseWords(this.cleanInputText());
+	}
 
-		if(!releasedWord){
-			return;
-		}
+	/**
+	 * Handles ctrl/alt + backspace by deleting the whole trailing word, the way
+	 * every other text input on the platform does.
+	 *
+	 * The space that separated the deleted word from the previous one stays, so
+	 * the next word can be typed straight away.
+	 */
+	handleCtrlBackspace(){
+		const inputField = this.elements.inputField;
+		const withoutTrailingSpace = inputField.value.replace(/\s+$/, "");
+		const lastBoundary = withoutTrailingSpace.lastIndexOf(" ");
 
-		console.debug(`Re-enabling ${releasedWord}`);
+		inputField.value = lastBoundary === -1
+			? ""
+			: withoutTrailingSpace.slice(0, lastBoundary + 1);
 
-		this.remainingChoices.returnLastUsed(releasedWord);
-		this.findAnswerButton(releasedWord)?.click();
+		this.releaseWords(this.splitWords(inputField.value));
 	}
 
 	/**
@@ -397,7 +455,13 @@ export class Challenge{
 			this.handleSpace();
 		}
 		else if(key === "Backspace"){
-			this.handleBackspace();
+			// Alt is the macOS equivalent of the ctrl+backspace word delete.
+			if(event.ctrlKey || event.altKey){
+				this.handleCtrlBackspace();
+			}
+			else{
+				this.handleBackspace();
+			}
 		}
 		else if(key === "Enter"){
 			if(Array.from(this.remainingChoices.wordMap.keys()).some(word =>
