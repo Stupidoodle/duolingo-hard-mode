@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.3.0...v1.4.0) (2026-09-01)
+
+
+### Features
+
+* **challenge:** add an option to ignore apostrophes while matching ([a0a5797](https://github.com/Stupidoodle/duolingo-hard-mode/commit/a0a57973c412e05b26d4135317879208a4d0078c)), closes [#30](https://github.com/Stupidoodle/duolingo-hard-mode/issues/30)
+* swap the toolbar icon to match hard mode ([b554918](https://github.com/Stupidoodle/duolingo-hard-mode/commit/b55491895d8e3a0587931844a59536c963ac9721)), closes [#24](https://github.com/Stupidoodle/duolingo-hard-mode/issues/24)
+
 ## [1.3.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.2.1...v1.3.0) (2026-09-01)
 
 
