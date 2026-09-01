@@ -309,7 +309,8 @@ export class Challenge{
 	 */
 	isTrailingWordClaimed(){
 		const words = this.splitWords(this.elements.inputField.value);
-		const token = words.at(-1);
+		// Not Array.prototype.at: CI still builds on Node 14, which predates it.
+		const token = words[words.length - 1];
 
 		if(!token){
 			return false;
@@ -337,7 +338,8 @@ export class Challenge{
 		}
 
 		const words = this.splitWords(this.elements.inputField.value);
-		const token = words.at(-1);
+		// Not Array.prototype.at: CI still builds on Node 14, which predates it.
+		const token = words[words.length - 1];
 
 		if(!token){
 			return;
