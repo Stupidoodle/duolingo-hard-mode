@@ -104,6 +104,10 @@ function initObserver() {
 function toggleExtension() {
 	extensionEnabled = !extensionEnabled;
 
+	// Persist it so the setting survives a reload and so the service worker,
+	// which watches storage, can swap the toolbar icon.
+	chrome.storage.sync.set({ extensionEnabled: extensionEnabled });
+
 	const toggleButton = document.getElementById("duo-hard-mode-toggle");
 	const toggleSpan = document.getElementById("duo-hard-mode-span");
 
