@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.2.1...v1.3.0) (2026-09-01)
+
+
+### Features
+
+* **challenge:** delete a whole word with ctrl+backspace ([faaa613](https://github.com/Stupidoodle/duolingo-hard-mode/commit/faaa6138d7f1c171a8ef826001771d28e9c09b09)), closes [#28](https://github.com/Stupidoodle/duolingo-hard-mode/issues/28)
+* **challenge:** match the word bank on every keystroke ([a4de7c4](https://github.com/Stupidoodle/duolingo-hard-mode/commit/a4de7c4631503e8126163119d38a6e2b37daf350)), closes [#29](https://github.com/Stupidoodle/duolingo-hard-mode/issues/29)
+
+
+### Bug Fixes
+
+* **challenge:** avoid Array.prototype.at for the Node 14 CI matrix ([32cfc76](https://github.com/Stupidoodle/duolingo-hard-mode/commit/32cfc76f74ae49d7a57af35708f56b7a5393449b))
+* **challenge:** avoid Array.prototype.at in the live word matching ([6193fc5](https://github.com/Stupidoodle/duolingo-hard-mode/commit/6193fc5a316bb64c1e49d39bd48c2962fbbb2dac))
+* **challenge:** return the word bubble matching the deleted word ([c51c2d4](https://github.com/Stupidoodle/duolingo-hard-mode/commit/c51c2d4bb4087bc28b6d126ca3b8553acc8b6c93)), closes [#31](https://github.com/Stupidoodle/duolingo-hard-mode/issues/31)
+
 ### [1.2.1](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.2.0...v1.2.1) (2025-03-10)
 
 ## [1.2.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.1.0...v1.2.0) (2025-03-10)
