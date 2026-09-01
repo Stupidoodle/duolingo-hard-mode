@@ -34,6 +34,7 @@ let activeChallenge = null;
 let observer = null;
 
 window.ignoreAccentsEnabled = false;
+window.ignoreApostrophesEnabled = false;
 
 /**
  * Enforces typing on the current challenge
@@ -198,6 +199,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 			ignoreAccentsSpan.textContent = request.enabled ? 'Enable Accents' : 'Disable Accents';
 			ignoreAccentsButton.style.top = '70px';
 		}
+    } else if (request.action === 'toggleIgnoreApostrophes') {
+        window.ignoreApostrophesEnabled = request.enabled;
     } else if (request.action === 'toggleOnPageControls') {
         const toggleButton = document.getElementById('duo-hard-mode-toggle');
         const ignoreAccentsButton = document.getElementById('duo-ignore-accents-toggle');
@@ -209,6 +212,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             if (ignoreAccentsButton) ignoreAccentsButton.remove();
         }
     }
+});
+
+chrome.storage.sync.get(['ignoreAccentsEnabled', 'ignoreApostrophesEnabled'], function(result) {
+    window.ignoreAccentsEnabled = !!result.ignoreAccentsEnabled;
+    window.ignoreApostrophesEnabled = !!result.ignoreApostrophesEnabled;
 });
 
 chrome.storage.sync.get(['showOnPageControls'], function(result) {

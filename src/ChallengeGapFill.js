@@ -133,7 +133,8 @@ export class ChallengeGapFill{
 		else if(key === "Enter"){
 			let userInput = this.elements.inputField.value.trim().toLowerCase();
 
-			const matchingKey = getMatchingKey(this.choiceBank.choiceMap, userInput, window.ignoreAccentsEnabled);
+			const matchingKey = getMatchingKey(this.choiceBank.choiceMap, userInput,
+			window.ignoreAccentsEnabled, window.ignoreApostrophesEnabled);
 
 			if(matchingKey){
 				console.debug(`Selecting choice: ${matchingKey}`);
@@ -166,7 +167,8 @@ export class ChallengeGapFill{
 			return;
 		}
 
-		const matchingKey = getMatchingKey(this.choiceBank.choiceMap, userInput, window.ignoreAccentsEnabled);
+		const matchingKey = getMatchingKey(this.choiceBank.choiceMap, userInput,
+			window.ignoreAccentsEnabled, window.ignoreApostrophesEnabled);
 
 		if(matchingKey){
 			console.debug(`Selecting choice: ${matchingKey}`);
