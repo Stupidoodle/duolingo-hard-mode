@@ -39,9 +39,10 @@ jobs:
 
       - name: Zip extension folder
         run: |
-          mkdir -p extension/dist
+          mkdir -p extension/dist extension/icons
           cp manifest.json extension/
           cp -r dist/* extension/dist/
+          cp -r icons/* extension/icons/
           zip -r "extension.zip" extension
 
       - name: Create GitHub Release

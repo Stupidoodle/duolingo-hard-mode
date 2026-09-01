@@ -5,6 +5,7 @@ module.exports = {
 	entry: {
 		content: "./src/content.js", // Your main content script
 		popup: "./src/popup.js",    // Popup script
+		background: "./src/background.js", // MV3 service worker
 	},
 	output: {
 		filename: "[name].bundle.js", // Outputs content.bundle.js and popup.bundle.js
