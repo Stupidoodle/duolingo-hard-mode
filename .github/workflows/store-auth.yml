@@ -93,29 +93,32 @@ jobs:
           echo "Timed out waiting for approval."
           exit 1
 
-      - name: Put the consent link somewhere you can open it
+      - name: Build the consent link
         if: inputs.step == 'url'
         env:
           CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
-          # The URL has to contain the client id, and GitHub masks that in logs
-          # because it is stored as a secret, so printing it here yields ***.
-          # gh gist create is secret by default (--public opts out); a secret gist
-          # is unlisted and link-only, which keeps it off a public
-          # repository while still giving a link that can be opened. The client
-          # secret is not involved.
+          # The URL must carry the client id, and GitHub masks it in the log
+          # because it is held as a secret — which is why printing it yields ***
+          # and opening that gives 401 invalid_client.
+          #
+          # An OAuth client id is a public identifier: it appears in the address
+          # bar of every consent screen Google shows, and Google documents it as
+          # not secret. Only the client secret is sensitive, and it is not used
+          # in this step. So the URL goes into an artifact, which is not masked.
           URL="https://accounts.google.com/o/oauth2/auth?response_type=code&scope=https://www.googleapis.com/auth/chromewebstore&client_id=${CLIENT_ID}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&access_type=offline&prompt=consent"
-
           printf '%s\n' "$URL" > consent-url.txt
-          GIST=$(gh gist create consent-url.txt --desc "Chrome Web Store consent link (single use)")
+          echo "Consent link written to the consent-link artifact on this run."
+          echo "Download it, open the URL, approve with the account that owns the"
+          echo "listing, then re-run this workflow with step=exchange and the code."
 
-          echo "Open this, then open the link inside it:"
-          echo "  $GIST"
-          echo
-          echo "Approve with the account that owns the store listing, copy the code,"
-          echo "then run this workflow again with step=exchange and that code."
-          echo "Delete the gist afterwards: gh gist delete <id>"
+      - name: Upload the consent link
+        if: inputs.step == 'url'
+        uses: actions/upload-artifact@v4
+        with:
+          name: consent-link
+          path: consent-url.txt
+          retention-days: 1
 
       - name: Exchange the code for a refresh token
         if: inputs.step == 'exchange'
