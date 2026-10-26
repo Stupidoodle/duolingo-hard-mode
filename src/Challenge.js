@@ -1,3 +1,7 @@
+import {
+	withFallbackTokens
+} from "./ThemeTokens.js";
+
 import{
 	ExtensionEventManager
 } from "./ExtensionEventManager.js"
@@ -610,7 +614,7 @@ export class Challenge{
 		this.elements.inputField.setAttribute("spellcheck", "false");
 		this.elements.inputField.setAttribute("placeholder", "Type here...");
 		this.elements.inputField.setAttribute("data-extension", "true");
-		this.elements.inputField.style.cssText = CONSTANTS.STYLE.INPUT;
+		this.elements.inputField.style.cssText = withFallbackTokens(CONSTANTS.STYLE.INPUT);
 
 		this.elements.wordBank.parentNode.insertBefore(this.elements.inputField, this.elements.wordBank);
 
