@@ -23,6 +23,13 @@ on:
         required: false
         type: string
 
+env:
+  # Out-of-band (urn:ietf:wg:oauth:2.0:oob) was shut down by Google in 2022
+  # and now returns redirect_uri_mismatch. Desktop OAuth clients accept any
+  # loopback port instead. Nothing has to be listening on it — the code comes
+  # back in the address bar.
+  REDIRECT_URI: http://localhost:8910
+
 jobs:
   auth:
     runs-on: ubuntu-latest
@@ -106,11 +113,12 @@ jobs:
           # bar of every consent screen Google shows, and Google documents it as
           # not secret. Only the client secret is sensitive, and it is not used
           # in this step. So the URL goes into an artifact, which is not masked.
-          URL="https://accounts.google.com/o/oauth2/auth?response_type=code&scope=https://www.googleapis.com/auth/chromewebstore&client_id=${CLIENT_ID}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&access_type=offline&prompt=consent"
+          URL="https://accounts.google.com/o/oauth2/auth?response_type=code&scope=https://www.googleapis.com/auth/chromewebstore&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&access_type=offline&prompt=consent"
           printf '%s\n' "$URL" > consent-url.txt
           echo "Consent link written to the consent-link artifact on this run."
-          echo "Download it, open the URL, approve with the account that owns the"
-          echo "listing, then re-run this workflow with step=exchange and the code."
+          echo "Open it, approve, and the browser will fail to load localhost:8910."
+          echo "That is expected. Copy the code= value out of the address bar and"
+          echo "re-run this workflow with step=exchange and that code."
 
       - name: Upload the consent link
         if: inputs.step == 'url'
@@ -126,6 +134,7 @@ jobs:
           CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
           AUTH_CODE: ${{ inputs.code }}
+          REDIRECT_URI: ${{ env.REDIRECT_URI }}
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
@@ -139,7 +148,7 @@ jobs:
             -d "client_secret=$CLIENT_SECRET" \
             -d "code=$AUTH_CODE" \
             -d "grant_type=authorization_code" \
-            -d "redirect_uri=urn:ietf:wg:oauth:2.0:oob" \
+            -d "redirect_uri=$REDIRECT_URI" \
             "https://oauth2.googleapis.com/token")
 
           REFRESH_TOKEN=$(echo "$RESPONSE" | jq -r '.refresh_token // empty')
