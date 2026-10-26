@@ -1,0 +1,78 @@
+name: Chrome Web Store auth
+
+# Regenerates CHROME_REFRESH_TOKEN without anyone needing a copy of the client
+# secret. It is already stored on this repository, so the exchange happens here
+# and the new refresh token is written straight back into the secret — it is
+# never displayed, and never leaves Actions.
+#
+# Two runs:
+#   1. step: url    -> prints a consent link. Open it, approve, copy the code.
+#   2. step: exchange, code: <the code> -> swaps it for a refresh token.
+
+on:
+  workflow_dispatch:
+    inputs:
+      step:
+        description: "url (get the consent link) or exchange (redeem the code)"
+        required: true
+        type: choice
+        options: [url, exchange]
+        default: url
+      code:
+        description: "Authorization code, only for step=exchange"
+        required: false
+        type: string
+
+jobs:
+  auth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print the consent link
+        if: inputs.step == 'url'
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+        run: |
+          # client_id and scope are not secret; the client secret stays unused here.
+          echo "Open this, approve with the account that owns the store listing,"
+          echo "then copy the code it shows you:"
+          echo
+          echo "https://accounts.google.com/o/oauth2/auth?response_type=code&scope=https://www.googleapis.com/auth/chromewebstore&client_id=${CLIENT_ID}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&access_type=offline&prompt=consent"
+          echo
+          echo "Then run this workflow again with step=exchange and paste the code."
+
+      - name: Exchange the code for a refresh token
+        if: inputs.step == 'exchange'
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          AUTH_CODE: ${{ inputs.code }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$AUTH_CODE" ]; then
+            echo "step=exchange needs the code input."
+            exit 1
+          fi
+
+          RESPONSE=$(curl -s -X POST \
+            -d "client_id=$CLIENT_ID" \
+            -d "client_secret=$CLIENT_SECRET" \
+            -d "code=$AUTH_CODE" \
+            -d "grant_type=authorization_code" \
+            -d "redirect_uri=urn:ietf:wg:oauth:2.0:oob" \
+            "https://oauth2.googleapis.com/token")
+
+          REFRESH_TOKEN=$(echo "$RESPONSE" | jq -r '.refresh_token // empty')
+
+          if [ -z "$REFRESH_TOKEN" ]; then
+            echo "No refresh token returned."
+            echo "$RESPONSE" | jq -r '"error: \(.error // "unknown")\ndescription: \(.error_description // "none")"'
+            echo "invalid_grant usually means the code was already used or has expired;"
+            echo "they are single-use and short-lived, so get a fresh one with step=url."
+            exit 1
+          fi
+
+          echo "::add-mask::$REFRESH_TOKEN"
+          echo "$REFRESH_TOKEN" | gh secret set CHROME_REFRESH_TOKEN --repo "$REPO"
+          echo "CHROME_REFRESH_TOKEN updated."
+          echo "Next: set CHROME_PUBLISHER_ID, then run publish-store.yml with tag v1.4.2."
