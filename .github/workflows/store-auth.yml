@@ -93,18 +93,28 @@ jobs:
           echo "Timed out waiting for approval."
           exit 1
 
-      - name: Print the consent link
+      - name: Put the consent link somewhere you can open it
         if: inputs.step == 'url'
         env:
           CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
-          # client_id and scope are not secret; the client secret stays unused here.
-          echo "Open this, approve with the account that owns the store listing,"
-          echo "then copy the code it shows you:"
+          # The URL has to contain the client id, and GitHub masks that in logs
+          # because it is stored as a secret, so printing it here yields ***.
+          # A secret gist is unlisted and link-only, which keeps it off a public
+          # repository while still giving a link that can be opened. The client
+          # secret is not involved.
+          URL="https://accounts.google.com/o/oauth2/auth?response_type=code&scope=https://www.googleapis.com/auth/chromewebstore&client_id=${CLIENT_ID}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&access_type=offline&prompt=consent"
+
+          printf '%s\n' "$URL" > consent-url.txt
+          GIST=$(gh gist create consent-url.txt --secret --desc "Chrome Web Store consent link (single use)")
+
+          echo "Open this, then open the link inside it:"
+          echo "  $GIST"
           echo
-          echo "https://accounts.google.com/o/oauth2/auth?response_type=code&scope=https://www.googleapis.com/auth/chromewebstore&client_id=${CLIENT_ID}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&access_type=offline&prompt=consent"
-          echo
-          echo "Then run this workflow again with step=exchange and paste the code."
+          echo "Approve with the account that owns the store listing, copy the code,"
+          echo "then run this workflow again with step=exchange and that code."
+          echo "Delete the gist afterwards: gh gist delete <id>"
 
       - name: Exchange the code for a refresh token
         if: inputs.step == 'exchange'
