@@ -13,11 +13,11 @@ on:
   workflow_dispatch:
     inputs:
       step:
-        description: "url (get the consent link) or exchange (redeem the code)"
+        description: "device (recommended), url, or exchange"
         required: true
         type: choice
-        options: [url, exchange]
-        default: url
+        options: [device, url, exchange]
+        default: device
       code:
         description: "Authorization code, only for step=exchange"
         required: false
@@ -27,6 +27,72 @@ jobs:
   auth:
     runs-on: ubuntu-latest
     steps:
+      - name: Approve with a short code
+        if: inputs.step == 'device'
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # The device flow never puts the client id in front of the user, so
+          # nothing here has to be unmasked. They get a short code instead.
+          START=$(curl -s -X POST \
+            -d "client_id=$CLIENT_ID" \
+            -d "scope=https://www.googleapis.com/auth/chromewebstore" \
+            "https://oauth2.googleapis.com/device/code")
+
+          DEVICE_CODE=$(echo "$START" | jq -r '.device_code // empty')
+          USER_CODE=$(echo "$START" | jq -r '.user_code // empty')
+          VERIFY=$(echo "$START" | jq -r '.verification_url // .verification_uri // empty')
+          INTERVAL=$(echo "$START" | jq -r '.interval // 5')
+
+          if [ -z "$DEVICE_CODE" ]; then
+            echo "Could not start the device flow."
+            echo "$START" | jq -r '"error: \(.error // "unknown")\ndescription: \(.error_description // "none")"'
+            echo
+            echo "invalid_client here means this OAuth client is not of type"
+            echo "\"TV and Limited Input devices\". Use step=url instead."
+            exit 1
+          fi
+
+          echo "::add-mask::$DEVICE_CODE"
+          echo "=============================================="
+          echo " Go to:   $VERIFY"
+          echo " Enter:   $USER_CODE"
+          echo "=============================================="
+          echo "Approve with the account that owns the store listing."
+          echo "Waiting up to 10 minutes..."
+
+          for _ in $(seq 1 120); do
+            sleep "$INTERVAL"
+            RESPONSE=$(curl -s -X POST \
+              -d "client_id=$CLIENT_ID" \
+              -d "client_secret=$CLIENT_SECRET" \
+              -d "device_code=$DEVICE_CODE" \
+              -d "grant_type=urn:ietf:params:oauth:grant-type:device_code" \
+              "https://oauth2.googleapis.com/token")
+
+            REFRESH_TOKEN=$(echo "$RESPONSE" | jq -r '.refresh_token // empty')
+            if [ -n "$REFRESH_TOKEN" ]; then
+              echo "::add-mask::$REFRESH_TOKEN"
+              echo "$REFRESH_TOKEN" | gh secret set CHROME_REFRESH_TOKEN --repo "$REPO"
+              echo "CHROME_REFRESH_TOKEN updated."
+              exit 0
+            fi
+
+            ERR=$(echo "$RESPONSE" | jq -r '.error // empty')
+            case "$ERR" in
+              authorization_pending|slow_down) ;;
+              *) echo "Device flow failed: $ERR"
+                 echo "$RESPONSE" | jq -r '.error_description // empty'
+                 exit 1 ;;
+            esac
+          done
+
+          echo "Timed out waiting for approval."
+          exit 1
+
       - name: Print the consent link
         if: inputs.step == 'url'
         env:
