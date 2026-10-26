@@ -11,6 +11,8 @@ jobs:
   release:
     if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.changelog.outputs.version }}
 
     steps:
       - name: Check out source code
@@ -32,6 +34,7 @@ jobs:
         run: |
           VERSION=$(jq -r .version package.json)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           snippet=$(awk "/^## \\[?$VERSION\\]?\\(?/,/^## /{print}" CHANGELOG.md | sed '$d')
           echo "changelog<<EOF" >> GITHUB_ENV
           echo "$snippet"       >> GITHUB_ENV
@@ -67,30 +70,9 @@ jobs:
           asset_name: extension.zip
           asset_content_type: application/zip
 
-      - name: Refresh Access Token
-        id: refresh_token
-        run: |
-          RESPONSE=$(curl -s -X POST \
-            -d "client_id=${{ secrets.CHROME_CLIENT_ID }}" \
-            -d "client_secret=${{ secrets.CHROME_CLIENT_SECRET }}" \
-            -d "refresh_token=${{ secrets.CHROME_REFRESH_TOKEN }}" \
-            -d "grant_type=refresh_token" \
-            "https://oauth2.googleapis.com/token")
-          ACCESS_TOKEN=$(echo $RESPONSE | jq -r '.access_token')
-          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
-
-      - name: Upload to Chrome Web Store
-        run: |
-          curl -X PUT \
-            -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
-            -H "x-goog-api-version: 2" \
-            -T extension.zip \
-            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}"
-
-      - name: Publish to Chrome Web Store
-        run: |
-          curl -X POST \
-            -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
-            -H "x-goog-api-version: 2" \
-            -H "Content-Length: 0" \
-            "https://www.googleapis.com/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}/publish"
+  publish-store:
+    needs: release
+    uses: ./.github/workflows/publish-store.yml
+    secrets: inherit
+    with:
+      tag: "v${{ needs.release.outputs.version }}"
