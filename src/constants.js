@@ -4,7 +4,18 @@
  */
 export const CONSTANTS = {
     STYLE:{
-        ACTIVE: `
+        PANEL: `
+            position: fixed;
+            top: 84px;
+            right: 16px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            max-width: 40vw;
+        `,
+                ACTIVE: `
             -webkit-text-size-adjust: 100%;
             margin: 0;
             overflow: visible;
@@ -12,10 +23,6 @@ export const CONSTANTS = {
             -webkit-tap-highlight-color: transparent;
             cursor: pointer;
             display: inline-flex;
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
             touch-action: manipulation;
             transform: translateZ(0);
             --__internal__font-size: var(--web-ui_button-font-size,15px);
@@ -54,8 +61,10 @@ export const CONSTANTS = {
             --web-ui_button-background-color: rgb(var(--color-owl));
             --web-ui_button-border-color: rgb(var(--color-tree-frog));
             --web-ui_button-color: rgb(var(--color-snow));
-            min-width: 150px;
-            --web-ui_button-font-size: 17px;
+            --web-ui_button-font-size: 13px;
+            --web-ui_button-height: 36px;
+            --web-ui_button-padding: 0 12px;
+            --web-ui_button-lip-width: 3px;
             width: auto;
             outline: none;
             background-color: var(--__internal__background-color);
@@ -72,10 +81,6 @@ export const CONSTANTS = {
             -webkit-tap-highlight-color: transparent;
             cursor: pointer;
             display: inline-flex;
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
             touch-action: manipulation;
             transform: translateZ(0);
             --__internal__font-size: var(--web-ui_button-font-size,15px);
@@ -114,8 +119,10 @@ export const CONSTANTS = {
             --web-ui_button-background-color: rgb(var(--color-cardinal));
             --web-ui_button-border-color: rgb(var(--color-fire-ant));
             --web-ui_button-color: rgb(var(--color-snow));
-            min-width: 150px;
-            --web-ui_button-font-size: 17px;
+            --web-ui_button-font-size: 13px;
+            --web-ui_button-height: 36px;
+            --web-ui_button-padding: 0 12px;
+            --web-ui_button-lip-width: 3px;
             width: auto;
             outline: none;
             background-color: var(--__internal__background-color);
