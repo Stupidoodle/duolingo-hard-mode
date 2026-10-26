@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.2](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.4.1...v1.4.2) (2026-10-26)
+
+
+### Bug Fixes
+
+* **ci:** repair and secure Chrome Web Store publishing ([a61b5f7](https://github.com/Stupidoodle/duolingo-hard-mode/commit/a61b5f75f01897786597054c7666b814e91385f3))
+* stop the on-page controls covering hearts and gems ([086fe1c](https://github.com/Stupidoodle/duolingo-hard-mode/commit/086fe1cb1d7c5fd083f4e469dce008aaf01a9c9b))
+
 ### [1.4.1](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.4.0...v1.4.1) (2026-10-26)
 
 
