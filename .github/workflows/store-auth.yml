@@ -101,13 +101,14 @@ jobs:
         run: |
           # The URL has to contain the client id, and GitHub masks that in logs
           # because it is stored as a secret, so printing it here yields ***.
-          # A secret gist is unlisted and link-only, which keeps it off a public
+          # gh gist create is secret by default (--public opts out); a secret gist
+          # is unlisted and link-only, which keeps it off a public
           # repository while still giving a link that can be opened. The client
           # secret is not involved.
           URL="https://accounts.google.com/o/oauth2/auth?response_type=code&scope=https://www.googleapis.com/auth/chromewebstore&client_id=${CLIENT_ID}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&access_type=offline&prompt=consent"
 
           printf '%s\n' "$URL" > consent-url.txt
-          GIST=$(gh gist create consent-url.txt --secret --desc "Chrome Web Store consent link (single use)")
+          GIST=$(gh gist create consent-url.txt --desc "Chrome Web Store consent link (single use)")
 
           echo "Open this, then open the link inside it:"
           echo "  $GIST"
