@@ -1,3 +1,7 @@
+import {
+	withFallbackTokens
+} from "./ThemeTokens.js";
+
 import{
 	ChallengeFactory,
 } from "./ChallengeFactory.js"
@@ -164,7 +168,7 @@ function toggleExtension() {
 
 	if(extensionEnabled){
         if (toggleSpan) toggleSpan.textContent = "Disable Hard";
-        if (toggleButton) toggleButton.style.cssText = CONSTANTS.STYLE.ACTIVE;
+        if (toggleButton) toggleButton.style.cssText = withFallbackTokens(CONSTANTS.STYLE.ACTIVE);
 
 		const processedDivs = document.querySelectorAll("[data-extension-processed='true']");
 		processedDivs.forEach(div => div.removeAttribute("data-extension-processed"));
@@ -172,7 +176,7 @@ function toggleExtension() {
 		initObserver();
 	}
 	else{
-        if (toggleButton) toggleButton.style.cssText = CONSTANTS.STYLE.INACTIVE;
+        if (toggleButton) toggleButton.style.cssText = withFallbackTokens(CONSTANTS.STYLE.INACTIVE);
         if (toggleSpan) toggleSpan.textContent = "Enable Hard";
 		// Disconnect observer, cleanup any active challenge:
 		observer.disconnect();
@@ -194,12 +198,12 @@ function createToggleButton() {
 
         const button = document.createElement('button');
         button.id = 'duo-hard-mode-toggle';
-        button.style.cssText = CONSTANTS.STYLE.ACTIVE;
+        button.style.cssText = withFallbackTokens(CONSTANTS.STYLE.ACTIVE);
 
         const span = document.createElement('span');
         span.id = 'duo-hard-mode-span';
         span.textContent = 'Disable Hard';
-        span.style.cssText = CONSTANTS.STYLE.SPAN;
+        span.style.cssText = withFallbackTokens(CONSTANTS.STYLE.SPAN);
 
         button.appendChild(span);
         button.addEventListener('click', toggleExtension);
@@ -220,20 +224,20 @@ function createIgnoreAccentsToggleButton() {
 
         const button = document.createElement('button');
         button.id = 'duo-ignore-accents-toggle';
-        button.style.cssText = CONSTANTS.STYLE.ACTIVE;
+        button.style.cssText = withFallbackTokens(CONSTANTS.STYLE.ACTIVE);
         button.style.top = '70px';
 
         const span = document.createElement('span');
         span.id = 'duo-ignore-accents-span';
         span.textContent = 'Disable Accents';
-        span.style.cssText = CONSTANTS.STYLE.SPAN;
+        span.style.cssText = withFallbackTokens(CONSTANTS.STYLE.SPAN);
 
         button.appendChild(span);
 
         button.addEventListener('click', () => {
             window.ignoreAccentsEnabled = !window.ignoreAccentsEnabled;
             span.textContent = window.ignoreAccentsEnabled ? 'Enable Accents' : 'Disable Accents';
-            button.style.cssText = window.ignoreAccentsEnabled ? CONSTANTS.STYLE.INACTIVE : CONSTANTS.STYLE.ACTIVE;
+            button.style.cssText = withFallbackTokens(window.ignoreAccentsEnabled ? CONSTANTS.STYLE.INACTIVE : CONSTANTS.STYLE.ACTIVE);
             button.style.top = '70px';
         });
 
@@ -249,7 +253,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		const ignoreAccentsButton = document.getElementById('duo-ignore-accents-toggle');
 		const ignoreAccentsSpan = document.getElementById('duo-ignore-accents-span');
 		if (ignoreAccentsButton) {
-			ignoreAccentsButton.style.cssText = request.enabled ? CONSTANTS.STYLE.INACTIVE : CONSTANTS.STYLE.ACTIVE;
+			ignoreAccentsButton.style.cssText = withFallbackTokens(request.enabled ? CONSTANTS.STYLE.INACTIVE : CONSTANTS.STYLE.ACTIVE);
 			ignoreAccentsSpan.textContent = request.enabled ? 'Enable Accents' : 'Disable Accents';
 			ignoreAccentsButton.style.top = '70px';
 		}

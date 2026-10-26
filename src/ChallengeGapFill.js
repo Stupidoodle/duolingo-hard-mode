@@ -1,3 +1,7 @@
+import {
+	withFallbackTokens
+} from "./ThemeTokens.js";
+
 import{
 	ChoiceBank
 } from "./ChoiceBank.js";
@@ -95,7 +99,7 @@ export class ChallengeGapFill{
 		this.elements.inputField.setAttribute("spellcheck", "false");
 		this.elements.inputField.setAttribute("placeholder", "Type here...");
 		this.elements.inputField.setAttribute("data-extension", "true");
-		this.elements.inputField.style.cssText = CONSTANTS.STYLE.INPUT;
+		this.elements.inputField.style.cssText = withFallbackTokens(CONSTANTS.STYLE.INPUT);
 
 		this.choiceDiv.parentNode.insertBefore(this.elements.inputField, this.choiceDiv.nextSibling);  // Needs to be tested
 
