@@ -19,8 +19,26 @@ for tool in gh curl jq; do
   command -v "$tool" >/dev/null || { echo "missing: $tool"; exit 1; }
 done
 
-read -rp "CHROME_CLIENT_ID: " CLIENT_ID
-read -rsp "CHROME_CLIENT_SECRET (hidden): " CLIENT_SECRET; echo
+# This flow is interactive, and it reads from the terminal explicitly so a
+# redirected stdin does not break it. Opening /dev/tty is the only reliable
+# test: it can exist and still not be attached, which is what happens when the
+# script is launched from inside an agent or a CI step.
+if ! { exec 3</dev/tty; } 2>/dev/null; then
+  cat >&2 <<'MSG'
+This script needs an interactive terminal.
+
+Open Terminal (or iTerm) yourself, cd to the repository, and run:
+
+    bash scripts/chrome-store-auth.sh
+
+Launching it through an agent, a pipe or a CI step will not work: it has to
+prompt you for the client secret and for the authorization code.
+MSG
+  exit 1
+fi
+
+read -rp "CHROME_CLIENT_ID: " CLIENT_ID <&3
+read -rsp "CHROME_CLIENT_SECRET (hidden): " CLIENT_SECRET <&3; echo
 
 cat <<MSG
 
@@ -33,7 +51,7 @@ Google returns an access token but no refresh token.
 
 MSG
 
-read -rp "Paste the authorization code: " AUTH_CODE
+read -rp "Paste the authorization code: " AUTH_CODE <&3
 
 RESPONSE=$(curl -s -X POST \
   -d "client_id=${CLIENT_ID}" \
