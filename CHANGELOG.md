@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.1](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.4.0...v1.4.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* activate on lessons entered without a page load ([9153134](https://github.com/Stupidoodle/duolingo-hard-mode/commit/91531342f960bb61abe3e5465d4522017997853e)), closes [#41](https://github.com/Stupidoodle/duolingo-hard-mode/issues/41)
+* leave IME composition keys to the input method ([ec7a4f6](https://github.com/Stupidoodle/duolingo-hard-mode/commit/ec7a4f61cae9c83b475f97457392c052cce43e1e)), closes [#48](https://github.com/Stupidoodle/duolingo-hard-mode/issues/48)
+* let injected UI follow Duolingo's light and dark themes ([356c10f](https://github.com/Stupidoodle/duolingo-hard-mode/commit/356c10f52d52358f20fb8a2766bbaf5d2d19ea05)), closes [#44](https://github.com/Stupidoodle/duolingo-hard-mode/issues/44)
+* read Japanese words without their furigana readings ([8cb4115](https://github.com/Stupidoodle/duolingo-hard-mode/commit/8cb4115aebd858e90070222ed6ad7e2efeb0854e)), closes [#42](https://github.com/Stupidoodle/duolingo-hard-mode/issues/42)
+
 ## [1.4.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.3.0...v1.4.0) (2026-09-01)
 
 
