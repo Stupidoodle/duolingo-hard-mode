@@ -1,0 +1,99 @@
+name: Publish to Chrome Web Store
+
+# Split out of release.yml so a failed or expired publish can be retried against
+# an existing tag. Re-running release.yml cannot do that: it dies on
+# "already_exists" when it recreates the GitHub release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish, e.g. v1.4.1"
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the release zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release download "$TAG" --repo "$REPO" --pattern extension.zip --clobber
+          unzip -l extension.zip | tail -3
+
+      - name: Refresh access token
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          RESPONSE=$(curl -s -X POST \
+            -d "client_id=$CLIENT_ID" \
+            -d "client_secret=$CLIENT_SECRET" \
+            -d "refresh_token=$REFRESH_TOKEN" \
+            -d "grant_type=refresh_token" \
+            "https://oauth2.googleapis.com/token")
+
+          ACCESS_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token // empty')
+
+          if [ -z "$ACCESS_TOKEN" ]; then
+            # Print only the error fields; the response can carry a token.
+            echo "Token refresh failed."
+            echo "$RESPONSE" | jq -r '"error: \(.error // "unknown")\ndescription: \(.error_description // "none")"'
+            echo "invalid_grant means CHROME_REFRESH_TOKEN must be regenerated."
+            echo "If the OAuth consent screen is still in Testing, Google expires refresh tokens after 7 days."
+            exit 1
+          fi
+
+          # Keep the token out of the logs. Without this it is printed verbatim
+          # in the env block of every later step.
+          echo "::add-mask::$ACCESS_TOKEN"
+          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> "$GITHUB_ENV"
+
+      - name: Upload the package
+        env:
+          PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          RESPONSE=$(curl -s --fail-with-body -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Content-Type: application/zip" \
+            --data-binary @extension.zip \
+            "https://chromewebstore.googleapis.com/upload/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:upload")
+
+          echo "$RESPONSE" | jq -r '{uploadState, itemError}' || echo "$RESPONSE"
+
+          STATE=$(echo "$RESPONSE" | jq -r '.uploadState // empty')
+          if [ "$STATE" != "SUCCESS" ]; then
+            echo "Upload did not succeed (uploadState=${STATE:-none})."
+            exit 1
+          fi
+
+      - name: Publish the item
+        env:
+          PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          RESPONSE=$(curl -s --fail-with-body -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Content-Length: 0" \
+            "https://chromewebstore.googleapis.com/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:publish")
+
+          echo "$RESPONSE" | jq '.' || echo "$RESPONSE"
+
+          # A fresh submission reports OK; one awaiting Google's review reports
+          # ITEM_PENDING_REVIEW. Anything else is a failure.
+          if echo "$RESPONSE" | jq -e '(.status // [])[] | select(. != "OK" and . != "ITEM_PENDING_REVIEW")' > /dev/null; then
+            echo "Publish reported an unexpected status."
+            exit 1
+          fi
+          echo "Submitted. Google's review can take hours to days before the listing updates."
