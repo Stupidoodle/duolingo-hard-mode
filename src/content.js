@@ -36,6 +36,41 @@ let observer = null;
 window.ignoreAccentsEnabled = false;
 window.ignoreApostrophesEnabled = false;
 
+const SKIPPED_TYPES = ["completeReverseTranslation"];
+const CHOICE_TYPES = ["gapFill", "assist", "select", "selectTranscription"];
+
+/**
+ * Builds the challenge for a container, or returns null when the DOM it needs
+ * has not rendered yet.
+ *
+ * Duolingo commits the challenge container before the word bank or the choice
+ * radiogroup, so "not there" is a normal intermediate state rather than an
+ * error — and the caller must not mark the container in that state.
+ *
+ * @param {String} challengeType
+ * @param {HTMLElement} challengeDiv
+ * @returns {Object|null}
+ */
+function buildChallenge(challengeType, challengeDiv){
+	if(CHOICE_TYPES.includes(challengeType)){
+		const choiceDiv = document.querySelector('div[aria-label="choice"][role="radiogroup"]');
+
+		if(!choiceDiv || !choiceDiv.querySelector('[data-test="challenge-choice"]')){
+			return null;
+		}
+
+		return new ChallengeGapFill(challengeDiv, choiceDiv, eventManager);
+	}
+
+	const wordBank = challengeDiv.querySelector("div[data-test='word-bank']");
+
+	if(!wordBank || !wordBank.querySelector("button[data-test*='challenge-tap-token']")){
+		return null;
+	}
+
+	return ChallengeFactory.create(challengeType, challengeDiv, eventManager);
+}
+
 /**
  * Enforces typing on the current challenge
  */
@@ -59,28 +94,43 @@ function enforceTyping(){
 
 	const challengeType = challengeDiv.getAttribute("data-test").replace("challenge challenge-", "")
 
-	if(["completeReverseTranslation"].includes(challengeType)){
+	if(SKIPPED_TYPES.includes(challengeType)){
 		return;
 	}
 
-	console.debug(challengeType)
-	if(challengeType !== "gapFill" && challengeType !== "assist" && challengeType !== "select" && challengeType !== "selectTranscription"){
-		try {
-			challengeDiv.setAttribute("data-extension-processed", "true");
-			activeChallenge = ChallengeFactory.create(challengeType, challengeDiv, eventManager);
-			console.debug(`Creating challenge ${challengeType}`);
-			activeChallenge.enforceTyping();
-		} catch (error) {
-			console.error(error.message)
-		}
-	}
-	else if(challengeType === "gapFill" || challengeType === "assist" || challengeType === "select" || challengeType === "selectTranscription"){
+	if(!CHOICE_TYPES.includes(challengeType) && !ChallengeFactory.registry.has(challengeType)){
+		// Nothing can handle this type, so there is no point looking again.
 		challengeDiv.setAttribute("data-extension-processed", "true");
-		const choiceDiv = document.querySelector('div[aria-label="choice"][role="radiogroup"]');
-		activeChallenge = new ChallengeGapFill(challengeDiv, choiceDiv, eventManager);
-		console.debug(`Creating challenge ${challengeType}`);
-		activeChallenge.enforceTyping();
+		return;
 	}
+
+	let challenge;
+
+	try {
+		challenge = buildChallenge(challengeType, challengeDiv);
+	} catch (error) {
+		// A container caught mid-render throws on whatever has not landed yet.
+		// Leaving it unmarked is what lets the next mutation retry.
+		console.debug(`Not ready for ${challengeType}: ${error.message}`);
+		return;
+	}
+
+	if(!challenge){
+		return;
+	}
+
+	challenge.enforceTyping();
+
+	if(!challenge.elements?.inputField){
+		// The bank or choice list rendered empty; try again once it fills.
+		challenge.cleanup?.();
+		return;
+	}
+
+	// Only now is the container genuinely handled.
+	challengeDiv.setAttribute("data-extension-processed", "true");
+	activeChallenge = challenge;
+	console.debug(`Creating challenge ${challengeType}`);
 }
 
 /**
