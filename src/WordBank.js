@@ -1,3 +1,7 @@
+import {
+	readTokenText
+} from "./TokenText.js";
+
 export class WordBank {
 	constructor(wordBankDiv) {
 		if (!wordBankDiv) {
@@ -25,10 +29,9 @@ export class WordBank {
 		];
 
 		return wordButtons.reduce((map, btn) => {
-			const word = btn
-				.querySelector("[data-test='challenge-tap-token-text']")
-				.textContent.trim()
-				.toLowerCase();
+			const word = readTokenText(
+				btn.querySelector("[data-test='challenge-tap-token-text']")
+			).toLowerCase();
 
 			if (!map.has(word)) {
 				map.set(word, []);

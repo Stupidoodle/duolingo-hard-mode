@@ -12,6 +12,10 @@ import{
 } from "./WordBank.js";
 
 import{
+	readTokenText
+} from "./TokenText.js";
+
+import{
 	CONSTANTS
 } from "./constants.js";
 
@@ -238,10 +242,10 @@ export class Challenge{
 			.filter(button => button.getAttribute("aria-disabled") === "false")
 			.filter(button => !wordBankDiv?.contains(button))
 			.filter(button => {
-				const text = button
-					.querySelector("[data-test='challenge-tap-token-text']")
-					?.textContent;
-				return text != null && this.normalizeWord(text) === target;
+				const text = readTokenText(
+					button.querySelector("[data-test='challenge-tap-token-text']")
+				);
+				return text !== "" && this.normalizeWord(text) === target;
 			});
 
 		// Index arithmetic rather than Array.prototype.at: CI still builds on

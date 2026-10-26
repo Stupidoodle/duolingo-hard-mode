@@ -1,3 +1,7 @@
+import {
+	readTokenText
+} from "./TokenText.js";
+
 export class ChoiceBank{
 	constructor(choiceDiv) {
 		if(!choiceDiv){
@@ -24,18 +28,10 @@ export class ChoiceBank{
 		];
 
 		return choiceButtons.reduce((map, btn) => {
-			let choice;
-			if(btn.querySelector(
-				'[data-test="challenge-judge-text"]'
-			)){
-				choice = btn.querySelector(
-					'[data-test="challenge-judge-text"]'
-				).textContent.trim().toLowerCase();
-			}
-			else{
-				// Fallback
-				choice = btn.querySelector('span[dir="ltr"]').textContent.trim().toLowerCase();
-			}
+			const judgeText = btn.querySelector('[data-test="challenge-judge-text"]');
+			// Fallback: a Japanese `select` challenge renders its choices this way.
+			const choiceText = judgeText || btn.querySelector('span[dir="ltr"]');
+			const choice = readTokenText(choiceText).toLowerCase();
 
 			if(!choice) {
 				throw new Error("Choice text not found");
