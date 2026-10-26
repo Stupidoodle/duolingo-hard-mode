@@ -60,7 +60,7 @@ The release workflow zips `manifest.json` plus `dist/*` into an `extension/` fol
 
 ## Architecture
 
-A Manifest V3 content script that rewrites Duolingo's click-the-word-bubbles challenges into a typing exercise. There is no background service worker — `src/content.js` and `src/popup.js` are the only two entry points (both bundled by webpack).
+A Manifest V3 extension that rewrites Duolingo's click-the-word-bubbles challenges into a typing exercise. Three webpack entry points: `src/content.js` (the content script, where nearly all behaviour lives), `src/popup.js` (the toolbar popup) and `src/background.js` (a service worker whose only job is swapping the toolbar icon).
 
 ### Injection loop
 
@@ -68,8 +68,10 @@ A Manifest V3 content script that rewrites Duolingo's click-the-word-bubbles cha
 
 1. Finds `div[data-test^='challenge challenge-']` — Duolingo's per-challenge container.
 2. Derives the challenge type by stripping the `challenge challenge-` prefix off `data-test`.
-3. Cleans up the previous `activeChallenge` if the div changed, then marks the new div with `data-extension-processed="true"` so it is handled exactly once.
-4. Instantiates a challenge and calls `enforceTyping()` on it.
+3. Cleans up the previous `activeChallenge` if the div changed.
+4. Builds the challenge, calls `enforceTyping()`, and only then marks the div with `data-extension-processed="true"`.
+
+**The ordering in step 4 is load-bearing.** Entering a lesson from inside the app is a client-side navigation, so React commits the challenge container before its word bank. Marking first meant a container caught in that state was marked while construction threw on the missing bank, and the "already processed" guard then skipped it forever — the extension appeared to work only after a page refresh. A missing bank or radiogroup must end the attempt and leave the container unmarked so the next mutation retries.
 
 Because everything keys off Duolingo's `data-test` attributes, **a Duolingo DOM change is the most likely cause of a sudden breakage.** The selectors are scattered across `Challenge.js`, `WordBank.js`, and `ChoiceBank.js` rather than centralized.
 
@@ -90,27 +92,37 @@ Challenge construction is deliberately split:
 - `WordBank` — LIFO pool over `button[data-test*='challenge-tap-token']`. `selectWord` pops the **last** available button for a word and pushes it onto `usedWordButtons`; `returnLastUsed` pops that stack back. Duplicate words in one sentence rely on this stack discipline — bugs about the wrong bubble being removed live here.
 - `ChoiceBank` — same idea for `[data-test="challenge-choice"]` radio options.
 - `ExtensionEventManager` — one global capture-phase `keydown`/`keypress`/`input` listener on `document`. It swallows events targeting `textarea[data-extension='true']` (`stopImmediatePropagation`) so Duolingo's own handlers never see them, then routes `' '`, `Backspace`, `Enter`, and `'` to the challenge registered under `textarea.dataset.challengeId`. Challenges register/unregister themselves by `challengeId` (`<type>-<Date.now()>`).
-- `AccentUtils` — `normalizeText` (NFD + strip combining marks) and `getMatchingKey`, which resolves typed input to a word-bank key with or without accent sensitivity.
-- `constants.js` — ~1400 lines, almost entirely verbatim copies of Duolingo's CSS custom properties in `CONSTANTS.STYLE.{ACTIVE,INACTIVE,SPAN,INPUT}`, so injected UI inherits native styling. Treat it as data, not code.
+- `AccentUtils` — `normalizeText` (NFD + strip combining marks), `normalizeApostrophes`, `normalizeForMatch` and `getMatchingKey`, which resolves typed input to a word-bank key under the accent and apostrophe leniency settings. Inside `Challenge`, go through `matchKey`, which supplies both flags.
+- `TokenText` — `readTokenText`, the only correct way to read a token's word. Courses that annotate their script render tokens as ruby with the reading in `<rt>` interleaved between the characters, so plain `textContent` returns `すsuしshi` for すし. Never read `[data-test='challenge-tap-token-text']` with `textContent` directly.
+- `constants.js` — `CONSTANTS.STYLE.{ACTIVE,INACTIVE,SPAN,INPUT}`, applied with `element.style.cssText`. The rules reference Duolingo's own tokens (`rgb(var(--color-snow))`) and resolve from its `:root`, which is what makes the injected UI follow light and dark mode. **Do not paste `--color-*` declarations back in.** They were there originally, snapshotted from a dark-mode session, and because `cssText` makes them inline they overrode the page's theme and pinned everything to dark.
 
 ### Settings and messaging
 
-`src/popup.js` writes `extensionEnabled`, `ignoreAccentsEnabled`, and `showOnPageControls` to `chrome.storage.sync`, then `chrome.tabs.sendMessage`s the active tab with `toggleExtension` / `toggleIgnoreAccents` / `toggleOnPageControls`. `content.js` handles those in `chrome.runtime.onMessage`.
+`src/popup.js` writes `extensionEnabled`, `ignoreAccentsEnabled`, `ignoreApostrophesEnabled` and `showOnPageControls` to `chrome.storage.sync`, then `chrome.tabs.sendMessage`s the active tab with the matching `toggle*` action. `content.js` handles those in `chrome.runtime.onMessage`.
 
-Accent state lives on `window.ignoreAccentsEnabled` (a page global, not module state) — challenges read it at keypress time. `showOnPageControls` gates the two floating in-page buttons (`duo-hard-mode-toggle`, `duo-ignore-accents-toggle`), which are injected on load only when the setting is on.
+`src/background.js` watches `chrome.storage.onChanged` rather than listening for messages, so both the popup toggle and the on-page toggle drive the toolbar icon just by writing the setting. Icons live in `icons/` and are generated by `scripts/generate-icons.py`; `release.yml` copies that directory into the zip alongside `manifest.json` and `dist/`.
+
+Leniency state lives on `window.ignoreAccentsEnabled` and `window.ignoreApostrophesEnabled` (page globals, not module state) — challenges read them at keypress time, and `content.js` seeds both from storage on load. `showOnPageControls` gates the two floating in-page buttons (`duo-hard-mode-toggle`, `duo-ignore-accents-toggle`), which are injected on load only when the setting is on.
 
 Toggling the extension off disconnects the observer and calls `activeChallenge.cleanup()`; toggling on strips every `data-extension-processed` attribute and re-runs the observer, so already-rendered challenges get re-processed.
 
 ## Tests
 
-Jest with `testEnvironment: "jsdom"`, `clearMocks: true`, coverage always on (`coverageProvider: "v8"`). `jest.setup.cjs` assigns `jest-chrome` onto `global`, which is what makes `chrome.storage` / `chrome.runtime` available in tests.
+Jest with `testEnvironment: "jsdom"`, `clearMocks: true`, coverage always on (`coverageProvider: "v8"`). `jest.setup.cjs` assigns `jest-chrome` onto `global`, which is what makes `chrome.storage` / `chrome.runtime` available in tests, and adds a `chrome.action` stub because `jest-chrome` predates Manifest V3 and has none.
+
+`tests/helpers/challengeDom.js` builds the word-bank/answer-area DOM and returns the challenge plus a `clicked` spy array; prefer it over hand-rolling a fixture.
+
+**`initGlobalKeyCapture` listeners leak between tests.** It attaches a capture-phase listener to `document` that calls `stopImmediatePropagation`, and document listeners outlive individual tests. Calling it once per test stacks listeners, and the first one swallows every later test's events — which looks exactly like a genuine failure. Either give the suite its own file and one shared manager, or re-register the challenge under the same id rather than re-initialising.
 
 Tests mirror `src/` file-for-file and drive real DOM: they build Duolingo-shaped markup with `document.body.innerHTML` in `beforeEach`, then assert against it. When adding a challenge type, copy the markup fixture pattern from `tests/ChallengeTapComplete.test.js`.
 
-`src/content.js` is the least-covered file (~39%) — its top-level side effects (observer setup, storage reads) make it awkward to test.
+`src/content.js` is the least-covered file — its top-level side effects (observer setup, storage reads) make it awkward to test, though `tests/ContentSpaEntry.test.js` does drive it through the real MutationObserver by appending DOM in stages.
 
 ## Known DOM-coupling risks
 
 - Word-bank text is read from `[data-test='challenge-tap-token-text']` and lowercased; matching is case-insensitive throughout.
 - `ChoiceBank` reads `[data-test="challenge-judge-text"]` and falls back to `span[dir="ltr"]`.
 - Duolingo re-renders challenge divs frequently; the `data-extension-processed` guard plus the `activeChallenge.challengeDiv` identity check are what prevent double-injection.
+- Token `data-test` values carry the word as a prefix, as in `gato-challenge-tap-token`. That is why `WordBank` matches with `[data-test*='challenge-tap-token']` rather than an exact value, and why a token cannot be located by that attribute alone.
+- Japanese and Chinese annotate tokens with ruby readings; always read them through `readTokenText`.
+- Japanese input uses an IME, where Space selects a candidate and Enter commits. `ExtensionEventManager` passes a keydown through untouched when `isComposing` is set or `keyCode` is 229, and defers live matching to `compositionend`. Do not add unconditional `preventDefault` back to those keys.
