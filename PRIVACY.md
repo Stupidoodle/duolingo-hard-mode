@@ -13,8 +13,8 @@ The extension simply modifies the **user interface of Duolingo** to enforce typi
 ## **3. Permissions Explanation**
 The extension requests minimal permissions:
 
-- **`scripting`**: Required to modify the Duolingo webpage and replace word bank challenges with text input.
-- **`*://*.duolingo.com/*`**: Required to apply changes specifically on Duolingo and nowhere else.
+- **`storage`**: Saves your four on/off settings (hard mode, ignore accents, ignore apostrophes, on-page controls) in Chrome's own settings storage. Nothing else is stored.
+- **`*://*.duolingo.com/*`**: The content script runs on Duolingo pages and nowhere else.
 
 The extension does not inject scripts into other websites or interact with any user data outside of Duolingo.
 
@@ -30,6 +30,6 @@ The extension does **not** share any data with third parties, including advertis
 
 ## **7. Contact**
 For any privacy concerns or questions, feel free to reach out via:  
-📧 **Email:** [https://linkedin.com/in/btr-dev](https://linkedin.com/in/btr-dev)
+💼 **LinkedIn:** [https://linkedin.com/in/btr-dev](https://linkedin.com/in/btr-dev)
 
 🔗 **GitHub:** [https://github.com/Stupidoodle/duolingo-hard-mode](https://github.com/Stupidoodle/duolingo-hard-mode)
