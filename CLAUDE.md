@@ -75,20 +75,25 @@ A Manifest V3 extension that rewrites Duolingo's click-the-word-bubbles challeng
 
 Because everything keys off Duolingo's `data-test` attributes, **a Duolingo DOM change is the most likely cause of a sudden breakage.** The selectors are scattered across `Challenge.js`, `WordBank.js`, and `ChoiceBank.js` rather than centralized.
 
-### Two dispatch paths (important)
+### Three dispatch paths (important)
 
 Challenge construction is deliberately split:
 
 - **Factory path** — `ChallengeFactory.create(type, challengeDiv, eventManager)`. Types are registered at the top of `content.js` (`translate`, `tapComplete`, `listenTap`). `ChallengeFactory.register` rejects any class that does not extend `Challenge`.
 - **Direct-construction path** — `gapFill`, `assist`, `select`, and `selectTranscription` bypass the factory and construct `ChallengeGapFill` directly, because it takes an extra `choiceDiv` argument (`div[aria-label="choice"][role="radiogroup"]`, which lives outside the challenge div) and **does not extend `Challenge`** — so it cannot be registered with the factory.
 
-`completeReverseTranslation` is explicitly skipped. Adding a new challenge type means either registering a `Challenge` subclass, or extending the direct-construction branch if it needs out-of-tree DOM.
+- **Pairs path** — `listenMatch` and `match` (`PAIR_TYPES`) construct the standalone `ChallengeMatch`, but only once `ChallengeMatch.isPairLayout` accepts the tiles; until then `buildChallenge` returns null and the container stays unmarked.
+
+`completeReverseTranslation` is explicitly skipped. Adding a new challenge type means either registering a `Challenge` subclass, or extending one of the direct-construction branches if it needs out-of-tree DOM or has no word bank.
+
+Already typing natively, so deliberately left alone: `completeReverseTranslation`, `listenComplete`, `listen`, `name` (Duolingo renders its own text input). Not convertible: `speak`/`listenSpeak` (voice) and `listenIsolation`, whose choices are audio-only with no text in the DOM — mapping a typed word to one would need a page-world script reading React state.
 
 ### Class responsibilities
 
 - `Challenge` (abstract, `src/Challenge.js`) — the bulk of the logic. Creates the `<textarea data-extension="true">`, maps typed words onto word-bank buttons, handles space/backspace/enter/apostrophe, and manages focus. Subclasses override `extractElements()` and challenge-specific bits.
 - `ChallengeTranslate`, `ChallengeTapComplete` — thin subclasses of `Challenge`.
 - `ChallengeGapFill` — standalone; drives radio-button choices via `ChoiceBank` instead of a word bank.
+- `ChallengeMatch` — standalone; hides the answer column of a pairs challenge and makes Enter tap the hidden tile whose text was typed. Typing alone never taps: **a wrong pair costs a heart**. Duolingo shows tile selection only through the Web Animations API (no attribute, no class), so the class never infers it; it taps a prompt itself only when nothing can be selected (fresh challenge, or right after a pair locks in, seen as `aria-disabled="true"` through its own attribute observer).
 - `WordBank` — LIFO pool over `button[data-test*='challenge-tap-token']`. `selectWord` pops the **last** available button for a word and pushes it onto `usedWordButtons`; `returnLastUsed` pops that stack back. Duplicate words in one sentence rely on this stack discipline — bugs about the wrong bubble being removed live here.
 - `ChoiceBank` — same idea for `[data-test="challenge-choice"]` radio options.
 - `ExtensionEventManager` — one global capture-phase `keydown`/`keypress`/`input` listener on `document`. It swallows events targeting `textarea[data-extension='true']` (`stopImmediatePropagation`) so Duolingo's own handlers never see them, then routes `' '`, `Backspace`, `Enter`, and `'` to the challenge registered under `textarea.dataset.challengeId`. Challenges register/unregister themselves by `challengeId` (`<type>-<Date.now()>`).
@@ -125,4 +130,6 @@ Tests mirror `src/` file-for-file and drive real DOM: they build Duolingo-shaped
 - Duolingo re-renders challenge divs frequently; the `data-extension-processed` guard plus the `activeChallenge.challengeDiv` identity check are what prevent double-injection.
 - Token `data-test` values carry the word as a prefix, as in `gato-challenge-tap-token`. That is why `WordBank` matches with `[data-test*='challenge-tap-token']` rather than an exact value, and why a token cannot be located by that attribute alone.
 - Japanese and Chinese annotate tokens with ruby readings; always read them through `readTokenText`.
+- Pair tiles are in DOM order prompt column first, answer column second. In `listenMatch` partners share a `data-test`; in `match` they do not (each tile's `data-test` is its own text). A tile holding several words moves the first word behind the marker (`sœur-challenge-tap-token une`), so never select tokens with `$=`.
+- Word-bank bubbles can hold several words (`tu as`, `une sœur`); `Challenge.splitWords` regroups typed words into those keys.
 - Japanese input uses an IME, where Space selects a candidate and Enter commits. `ExtensionEventManager` passes a keydown through untouched when `isComposing` is set or `keyCode` is 229, and defers live matching to `compositionend`. Do not add unconditional `preventDefault` back to those keys.

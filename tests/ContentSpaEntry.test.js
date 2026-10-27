@@ -71,6 +71,30 @@ function createChoiceGroup(choices) {
 	return group;
 }
 
+/** listenMatch tiles: audio prompts first, then text answers sharing their data-test. */
+function createPairTiles(keys) {
+	const grid = document.createElement("div");
+	const tile = (key, withText) => {
+		const wrapper = document.createElement("span");
+		const btn = document.createElement("button");
+		btn.setAttribute("data-test", `${key}-challenge-tap-token`);
+		btn.setAttribute("aria-disabled", "false");
+		if (withText) {
+			const span = document.createElement("span");
+			span.setAttribute("data-test", "challenge-tap-token-text");
+			span.textContent = key;
+			btn.appendChild(span);
+		}
+		wrapper.appendChild(btn);
+		return wrapper;
+	};
+
+	keys.forEach(key => grid.appendChild(tile(key, false)));
+	[...keys].reverse().forEach(key => grid.appendChild(tile(key, true)));
+
+	return grid;
+}
+
 describe("entering a lesson without a page load", () => {
 	beforeEach(() => {
 		document.body.innerHTML = "";
@@ -109,5 +133,45 @@ describe("entering a lesson without a page load", () => {
 
 		expect(document.querySelector("textarea[data-extension='true']")).toBeNull();
 		expect(div.hasAttribute("data-extension-processed")).toBe(false);
+	});
+
+	test("converts a listenMatch challenge whose tiles arrive after the container", async () => {
+		const div = createChallengeDiv("listenMatch");
+		document.body.appendChild(div);
+		await tick();
+
+		expect(div.hasAttribute("data-extension-processed")).toBe(false);
+
+		div.appendChild(createPairTiles(["Tochter", "ja"]));
+		await tick();
+
+		expect(div.querySelector("textarea[data-extension='true']")).not.toBeNull();
+		expect(div.getAttribute("data-extension-processed")).toBe("true");
+	});
+
+	test("converts a match challenge once both text columns are in", async () => {
+		const div = createChallengeDiv("match");
+		document.body.appendChild(div);
+		await tick();
+
+		const grid = document.createElement("div");
+		const tile = (text, lang) => {
+			const wrapper = document.createElement("span");
+			const btn = document.createElement("button");
+			btn.setAttribute("lang", lang);
+			btn.setAttribute("data-test", `${text}-challenge-tap-token`);
+			btn.setAttribute("aria-disabled", "false");
+			const span = document.createElement("span");
+			span.setAttribute("data-test", "challenge-tap-token-text");
+			span.textContent = text;
+			btn.appendChild(span);
+			wrapper.appendChild(btn);
+			return wrapper;
+		};
+		grid.append(tile("water", "en"), tile("cat", "en"), tile("gato", "es"), tile("agua", "es"));
+		div.appendChild(grid);
+		await tick();
+
+		expect(div.querySelector("textarea[data-extension='true']")).not.toBeNull();
 	});
 });
