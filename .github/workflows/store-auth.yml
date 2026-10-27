@@ -13,11 +13,11 @@ on:
   workflow_dispatch:
     inputs:
       step:
-        description: "device (recommended), url, or exchange"
+        description: "url (start here), then exchange"
         required: true
         type: choice
-        options: [device, url, exchange, publisher]
-        default: device
+        options: [url, exchange]
+        default: url
       code:
         description: "Authorization code, only for step=exchange"
         required: false
@@ -34,111 +34,6 @@ jobs:
   auth:
     runs-on: ubuntu-latest
     steps:
-      - name: Discover and store the publisher id
-        if: inputs.step == 'publisher'
-        env:
-          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: |
-          TOKEN=$(curl -s -X POST \
-            -d "client_id=$CLIENT_ID" -d "client_secret=$CLIENT_SECRET" \
-            -d "refresh_token=$REFRESH_TOKEN" -d "grant_type=refresh_token" \
-            "https://oauth2.googleapis.com/token" | jq -r '.access_token // empty')
-          if [ -z "$TOKEN" ]; then echo "Token refresh failed."; exit 1; fi
-          echo "::add-mask::$TOKEN"
-
-          # The publisher id normally comes from the dashboard. Many Google APIs
-          # accept "-" as a wildcard for a parent collection and return the real
-          # resource name, which embeds the id. A read-only status call is
-          # enough to find out whether this one does.
-          for CANDIDATE in "-" "me"; do
-            RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
-              "https://chromewebstore.googleapis.com/v2/publishers/$CANDIDATE/items/$EXTENSION_ID:fetchStatus")
-            NAME=$(echo "$RESPONSE" | jq -r '.name // empty')
-            echo "publishers/$CANDIDATE -> ${NAME:-$(echo "$RESPONSE" | jq -c '.error // {}' )}"
-
-            PUBLISHER=$(echo "$NAME" | sed -n 's#^publishers/\([^/]*\)/items/.*#\1#p')
-            if [ -n "$PUBLISHER" ] && [ "$PUBLISHER" != "-" ] && [ "$PUBLISHER" != "me" ]; then
-              printf '%s' "$PUBLISHER" | gh secret set CHROME_PUBLISHER_ID --repo "$REPO"
-              echo "CHROME_PUBLISHER_ID set to $PUBLISHER"
-              exit 0
-            fi
-          done
-
-          echo "The API did not resolve the publisher id from a wildcard."
-          echo "It has to be copied from Developer Dashboard > Publisher > Settings."
-          exit 1
-
-      - name: Approve with a short code
-        if: inputs.step == 'device'
-        env:
-          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: |
-          # The device flow never puts the client id in front of the user, so
-          # nothing here has to be unmasked. They get a short code instead.
-          START=$(curl -s -X POST \
-            -d "client_id=$CLIENT_ID" \
-            -d "scope=https://www.googleapis.com/auth/chromewebstore" \
-            "https://oauth2.googleapis.com/device/code")
-
-          DEVICE_CODE=$(echo "$START" | jq -r '.device_code // empty')
-          USER_CODE=$(echo "$START" | jq -r '.user_code // empty')
-          VERIFY=$(echo "$START" | jq -r '.verification_url // .verification_uri // empty')
-          INTERVAL=$(echo "$START" | jq -r '.interval // 5')
-
-          if [ -z "$DEVICE_CODE" ]; then
-            echo "Could not start the device flow."
-            echo "$START" | jq -r '"error: \(.error // "unknown")\ndescription: \(.error_description // "none")"'
-            echo
-            echo "invalid_client here means this OAuth client is not of type"
-            echo "\"TV and Limited Input devices\". Use step=url instead."
-            exit 1
-          fi
-
-          echo "::add-mask::$DEVICE_CODE"
-          echo "=============================================="
-          echo " Go to:   $VERIFY"
-          echo " Enter:   $USER_CODE"
-          echo "=============================================="
-          echo "Approve with the account that owns the store listing."
-          echo "Waiting up to 10 minutes..."
-
-          for _ in $(seq 1 120); do
-            sleep "$INTERVAL"
-            RESPONSE=$(curl -s -X POST \
-              -d "client_id=$CLIENT_ID" \
-              -d "client_secret=$CLIENT_SECRET" \
-              -d "device_code=$DEVICE_CODE" \
-              -d "grant_type=urn:ietf:params:oauth:grant-type:device_code" \
-              "https://oauth2.googleapis.com/token")
-
-            REFRESH_TOKEN=$(echo "$RESPONSE" | jq -r '.refresh_token // empty')
-            if [ -n "$REFRESH_TOKEN" ]; then
-              echo "::add-mask::$REFRESH_TOKEN"
-              echo "$REFRESH_TOKEN" | gh secret set CHROME_REFRESH_TOKEN --repo "$REPO"
-              echo "CHROME_REFRESH_TOKEN updated."
-              exit 0
-            fi
-
-            ERR=$(echo "$RESPONSE" | jq -r '.error // empty')
-            case "$ERR" in
-              authorization_pending|slow_down) ;;
-              *) echo "Device flow failed: $ERR"
-                 echo "$RESPONSE" | jq -r '.error_description // empty'
-                 exit 1 ;;
-            esac
-          done
-
-          echo "Timed out waiting for approval."
-          exit 1
-
       - name: Build the consent link
         if: inputs.step == 'url'
         env:
@@ -161,7 +56,7 @@ jobs:
 
       - name: Upload the consent link
         if: inputs.step == 'url'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: consent-link
           path: consent-url.txt
