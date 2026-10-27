@@ -74,6 +74,7 @@ jobs:
         env:
           PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
           EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          TAG: ${{ inputs.tag }}
         run: |
           # No --fail-with-body: under bash -e a failing command substitution
           # aborts the step before the body is printed, which hides the store's
@@ -88,6 +89,17 @@ jobs:
 
           echo "HTTP $HTTP_STATUS"
           echo "$RESPONSE" | jq -c '{uploadState, itemError, error}' || echo "$RESPONSE"
+
+          # While an earlier version is in review the store refuses every upload.
+          # That is a wait, not a failure: store-sync.yml publishes the newest
+          # release once the review is decided.
+          REASON=$(echo "$RESPONSE" | jq -r '[.error.details[]?.reason // empty][0] // empty' 2>/dev/null || true)
+          if [ "$REASON" = "NOT_UPDATEABLE" ]; then
+            echo "::warning::The store has a version in review and refuses uploads until it is decided. store-sync.yml will publish $TAG afterwards."
+            echo "SKIP_PUBLISH=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
           STATE=$(echo "$RESPONSE" | jq -r '.uploadState // empty')
 
           # v2 reports a finished upload as SUCCEEDED (v1.1 said SUCCESS), and a
@@ -109,6 +121,7 @@ jobs:
           esac
 
       - name: Publish the item
+        if: env.SKIP_PUBLISH != 'true'
         env:
           PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
           EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
