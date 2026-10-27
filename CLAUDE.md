@@ -12,7 +12,7 @@ Use `bun` for every package and script command in this repo. Never invoke `npm`,
 | Run all tests (+ coverage) | `bun run test` |
 | Run a single test file | `bun run test tests/Challenge.test.js` |
 | Run tests matching a name | `bun run test -- -t "handleSubmit"` |
-| Lint | `bun x eslint .` |
+| Lint (CI fails on warnings) | `bun x eslint . --max-warnings 0` |
 | Production build | `bun run build` |
 | Development build | `bun run build:dev` |
 | Rebuild on change | `bun run watch` |
@@ -20,9 +20,8 @@ Use `bun` for every package and script command in this repo. Never invoke `npm`,
 
 **`bun test` is not `bun run test`.** `bun test` invokes bun's own runner, which ignores `jest.config.cjs` — no jsdom environment and no `jest-chrome` globals, so ~50 of the 66 tests fail with `ReferenceError: document is not defined`. Always go through `bun run test` so jest actually runs.
 
-`eslint.config.mjs` sets no `ignores`, so `eslint .` also lints generated `coverage/` and `dist/` output — the warnings it reports there are noise, not regressions.
 
-`bun install` works without the `--legacy-peer-deps` flag that npm requires here. The CI workflows in `.github/workflows/` still use `npm install --legacy-peer-deps` against `package-lock.json`; `package-lock.json` remains the committed lockfile until those workflows are migrated.
+`bun.lock` is the only committed lockfile, and CI uses bun as well (`bun install --frozen-lockfile`, `bun run test`, `bun run build`, `bun audit`), on a single Node 24 job — jest and webpack still execute on Node. `package.json`'s `packageManager` pins the bun version `oven-sh/setup-bun` installs. If dependencies change, commit the updated `bun.lock`; `--frozen-lockfile` fails CI otherwise. Never regenerate it from scratch: it was migrated from the old npm lockfile to keep patched transitive versions, and a fresh resolve reintroduced 71 advisories.
 
 ## Browser automation and Duolingo login
 
@@ -41,7 +40,7 @@ Chrome holds an exclusive lock on a profile directory, so both MCP browsers must
 
 Editing `.mcp.json` requires restarting Claude Code before the servers pick up new arguments.
 
-`scripts/` is a **separate bun workspace** with its own `package.json` holding `playwright-core`. This is deliberate: the root `package.json` must stay in sync with `package-lock.json`, because `.github/workflows/release.yml` runs `npm ci`, which fails on a mismatch. Keep local dev tooling deps in `scripts/`, not in the root manifest.
+`scripts/` is a **separate bun package** with its own `package.json` and lockfile holding `playwright-core`. Keep local dev tooling deps there, not in the root manifest, so they stay out of the extension's install, audit and CI.
 
 ## Loading the extension for manual testing
 
