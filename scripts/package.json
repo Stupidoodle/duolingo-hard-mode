@@ -2,8 +2,10 @@
 	"name": "duolingo-hard-mode-scripts",
 	"private": true,
 	"type": "module",
-	"description": "Local-only dev tooling. Kept out of the root package.json so CI's npm lockfile stays untouched.",
+	"description": "Local-only dev tooling. Kept out of the root package.json so the extension's install, audit and CI stay untouched.",
 	"dependencies": {
-		"playwright-core": "^1.55.0"
+		"@puppeteer/browsers": "3.2.4",
+		"playwright-core": "^1.55.0",
+		"puppeteer-core": "25.13.0"
 	}
 }

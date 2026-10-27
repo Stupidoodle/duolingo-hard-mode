@@ -8,6 +8,7 @@
 		"build": "webpack --config webpack.prod.js",
 		"build:dev": "webpack --config webpack.dev.js",
 		"build:firefox": "webpack --config webpack.prod.js && bun scripts/build-firefox.js",
+		"firefox": "bun run build:firefox && bun install --cwd scripts --silent && bun scripts/firefox-run.js",
 		"watch": "webpack --watch --config webpack.dev.js",
 		"test": "jest",
 		"login": "bun install --cwd scripts --silent && bun scripts/duolingo-login.mjs"

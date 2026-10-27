@@ -142,3 +142,6 @@ login-debug-*.png
 
 # Generated Firefox package (bun run build:firefox)
 build/
+
+# Browsers downloaded by @puppeteer/browsers for local Firefox testing
+.browsers/
