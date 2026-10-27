@@ -1,0 +1,4 @@
+# Coverage still reports as the codecov/patch and codecov/project status
+# checks on each PR. The PR comment is off: it duplicated those checks and
+# sent a GitHub notification email for every pull request.
+comment: false
