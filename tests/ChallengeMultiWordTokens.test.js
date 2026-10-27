@@ -127,8 +127,9 @@ describe("issue #64 — bubbles that span several words", () => {
 	test("prefers the longer bubble once its second word arrives", () => {
 		const { challenge } = setup(["tu", "tu as", "une"]);
 
+		// "tu" may still become "tu as", so it is not claimed on its own yet (#91).
 		type(challenge, "tu");
-		expect(challenge.remainingChoices.wordMap.get("tu")).toHaveLength(0);
+		expect(challenge.remainingChoices.wordMap.get("tu")).toHaveLength(1);
 
 		typeOut(challenge, "tu as");
 
