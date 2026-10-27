@@ -23,6 +23,10 @@ import{
 } from "./ChallengeGapFill.js";
 
 import{
+	ChallengeMatch
+} from "./ChallengeMatch.js";
+
+import{
 	CONSTANTS
 } from "./constants.js";
 
@@ -42,14 +46,15 @@ window.ignoreApostrophesEnabled = false;
 
 const SKIPPED_TYPES = ["completeReverseTranslation"];
 const CHOICE_TYPES = ["gapFill", "assist", "select", "selectTranscription"];
+const PAIR_TYPES = ["listenMatch"];
 
 /**
  * Builds the challenge for a container, or returns null when the DOM it needs
  * has not rendered yet.
  *
- * Duolingo commits the challenge container before the word bank or the choice
- * radiogroup, so "not there" is a normal intermediate state rather than an
- * error — and the caller must not mark the container in that state.
+ * Duolingo commits the challenge container before the word bank, the choice
+ * radiogroup or the pair tiles, so "not there" is a normal intermediate state
+ * rather than an error — and the caller must not mark the container in that state.
  *
  * @param {String} challengeType
  * @param {HTMLElement} challengeDiv
@@ -64,6 +69,12 @@ function buildChallenge(challengeType, challengeDiv){
 		}
 
 		return new ChallengeGapFill(challengeDiv, choiceDiv, eventManager);
+	}
+
+	if(PAIR_TYPES.includes(challengeType)){
+		return ChallengeMatch.isPairLayout(challengeDiv)
+			? new ChallengeMatch(challengeDiv, eventManager)
+			: null;
 	}
 
 	const wordBank = challengeDiv.querySelector("div[data-test='word-bank']");
@@ -102,7 +113,8 @@ function enforceTyping(){
 		return;
 	}
 
-	if(!CHOICE_TYPES.includes(challengeType) && !ChallengeFactory.registry.has(challengeType)){
+	if(!CHOICE_TYPES.includes(challengeType) && !PAIR_TYPES.includes(challengeType)
+		&& !ChallengeFactory.registry.has(challengeType)){
 		// Nothing can handle this type, so there is no point looking again.
 		challengeDiv.setAttribute("data-extension-processed", "true");
 		return;
