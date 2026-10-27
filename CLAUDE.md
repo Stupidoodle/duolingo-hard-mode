@@ -16,6 +16,8 @@ Use `bun` for every package and script command in this repo. Never invoke `npm`,
 | Production build | `bun run build` |
 | Development build | `bun run build:dev` |
 | Rebuild on change | `bun run watch` |
+| Firefox package (into `build/firefox`) | `bun run build:firefox` |
+| Open Firefox with the add-on installed | `bun run firefox` |
 | Re-auth MCP browsers (user runs this, not Claude) | `bun run login` |
 
 **`bun test` is not `bun run test`.** `bun test` invokes bun's own runner, which ignores `jest.config.cjs` — no jsdom environment and no `jest-chrome` globals, so ~50 of the 66 tests fail with `ReferenceError: document is not defined`. Always go through `bun run test` so jest actually runs.
@@ -47,6 +49,20 @@ Editing `.mcp.json` requires restarting Claude Code before the servers pick up n
 `bun run build` emits `dist/content.bundle.js`, `dist/popup.bundle.js`, and `dist/popup.html`. `manifest.json` at the repo root points at `dist/`, so `chrome://extensions` → Developer Mode → "Load unpacked" on the **repo root** loads the current build. `dist/` is gitignored; rebuild after pulling.
 
 The release workflow zips `manifest.json` plus `dist/*` into an `extension/` folder — keep that layout in mind when changing output paths.
+
+## Firefox
+
+`bun run build:firefox` writes the Firefox package to `build/firefox` (gitignored). Its manifest is **generated** from `manifest.json` by `scripts/firefox-manifest.js`; never add a second, hand-written manifest, because `standard-version` only bumps `manifest.json` and `package.json`. The transform swaps `background.service_worker` for `background.scripts` (Firefox runs MV3 background code as an event page) and adds `browser_specific_settings.gecko`:
+
+- `id: "duolingo-hard-mode@stupidoodle"`: permanent once AMO has published a version under it.
+- `strict_min_version: "142.0"`: `data_collection_permissions` needs 140 on desktop and 142 on Android, and older versions reject the key.
+- `data_collection_permissions: { required: ["none"] }`: mandatory for new AMO submissions since November 2025.
+
+`bun run firefox` downloads Firefox stable into `.browsers/` (gitignored) and opens it with the add-on installed temporarily; release Firefox refuses unsigned add-ons otherwise. A zip on a GitHub release is therefore not installable by users: the add-on only reaches them once AMO signs it, which needs the owner's AMO account (`store/amo.md` has the submission answers and reviewer build steps).
+
+CI lints the package with `web-ext lint --warnings-as-errors`, the same addons-linter AMO runs. Releases attach `extension-firefox.zip` (manifest at the zip root, as AMO requires) and `source-code.zip` (`git archive`, for AMO's source review). Keep the Firefox asset's name from matching `publish-store.yml`'s `--pattern extension.zip`.
+
+Driving Firefox from scripts (puppeteer-core over WebDriver BiDi, in `scripts/`): Firefox allows a single BiDi session, so keep one process holding it; BiDi cannot navigate to `about:` or `moz-extension://` pages; and Duolingo's onboarding waits on a real notification prompt unless `permissions.default.desktop-notification` is set to 2. The guest flow (Get started → Spanish → first radio option on each screen) reaches a lesson without an account.
 
 ## Commit and PR conventions
 

@@ -12,6 +12,8 @@ Duolingo lets you pass a lesson by tapping word bubbles. This Chrome extension h
 
 **[Install it from the Chrome Web Store](https://chromewebstore.google.com/detail/duolingo-hard-mode/jceggbkbebgncehlbekabbkfhdecfihh)**
 
+A Firefox version (Firefox 142 or later) is built and tested and is on its way to Firefox Add-ons. Until it is listed there, `bun run firefox` runs it from source.
+
 ## What it changes
 
 | Exercise | Duolingo | Hard Mode |
@@ -66,9 +68,13 @@ bun run build       # production build into dist/
 bun run build:dev   # development build
 bun run watch       # rebuild on change
 bun run test        # jest with coverage (not `bun test`, which skips jest)
+bun run build:firefox  # Firefox package into build/firefox
+bun run firefox     # open Firefox with the add-on installed
 ```
 
 The repository root is a loadable extension once built: "Load unpacked" on the repo root picks up `manifest.json` and `dist/`.
+
+The Firefox manifest is generated from `manifest.json` (an event page instead of the service worker, plus the gecko id and data-collection declaration), so there is only one manifest to edit. Release Firefox only accepts signed add-ons, which is why `bun run firefox` installs it temporarily.
 
 ## Contributing
 
