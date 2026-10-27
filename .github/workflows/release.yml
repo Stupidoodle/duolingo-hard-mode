@@ -1,46 +1,88 @@
 name: Auto Release
 
+# Runs on every merged PR, but only releases when package.json carries a
+# version that has no GitHub release yet, i.e. after a chore(release) merge.
+# Every other merge stops at the check instead of failing on "already_exists".
+
 on:
   pull_request:
-    types: [closed]  # Runs only when a PR is merged
+    types: [closed]
     branches:
-      - master  # Only trigger on merges to master
-  workflow_dispatch: {}  # Allows manual trigger
+      - master
+  workflow_dispatch: {}
 
 jobs:
   release:
     if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.changelog.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
+      released: ${{ steps.version.outputs.new }}
+    env:
+      # Build and tag exactly what was merged, not the PR's test-merge ref.
+      SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
 
     steps:
-      - name: Check out source code
-        uses: actions/checkout@v3
-
-      - name: Set up Node
-        uses: actions/setup-node@v3
+      - name: Check out the merged commit
+        uses: actions/checkout@v7
         with:
-          node-version: 16
+          ref: ${{ env.SHA }}
 
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Build production
-        run: npm run build
-
-      - name: Extract changelog entry
-        id: changelog
+      - name: Decide whether this version is new
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(jq -r .version package.json)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          snippet=$(awk "/^## \\[?$VERSION\\]?\\(?/,/^## /{print}" CHANGELOG.md | sed '$d')
-          echo "changelog<<EOF" >> GITHUB_ENV
-          echo "$snippet"       >> GITHUB_ENV
-          echo "EOF"           >> GITHUB_ENV
+
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "v$VERSION is already released; nothing to do."
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        if: steps.version.outputs.new == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        if: steps.version.outputs.new == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Build production
+        if: steps.version.outputs.new == 'true'
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Extract the release notes
+        if: steps.version.outputs.new == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Minor/major releases use "## [x.y.z]", patches "### [x.y.z]"; the
+          # section ends at the next version heading of either level.
+          awk -v v="$VERSION" '
+            /^##+ \[?[0-9]+\.[0-9]+\.[0-9]+/ {
+              if (found) exit
+              if (index($0, "[" v "]")) { found = 1; next }
+            }
+            found { print }
+          ' CHANGELOG.md > notes.md
+
+          if ! grep -q . notes.md; then
+            echo "CHANGELOG.md has no section for $VERSION." > notes.md
+          fi
+          cat notes.md
 
       - name: Zip extension folder
+        if: steps.version.outputs.new == 'true'
         run: |
           mkdir -p extension/dist extension/icons
           cp manifest.json extension/
@@ -48,30 +90,23 @@ jobs:
           cp -r icons/* extension/icons/
           zip -r "extension.zip" extension
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+      # A personal access token, so the release can trigger other workflows;
+      # events raised with GITHUB_TOKEN do not.
+      - name: Create the GitHub release
+        if: steps.version.outputs.new == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        with:
-          tag_name: "v${{ env.VERSION }}"
-          release_name: "Release v${{ env.VERSION }}"
-          draft: false
-          prerelease: false
-          body: ${{ env.changelog }}
-
-      - name: Upload ZIP to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: extension.zip
-          asset_name: extension.zip
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "v$VERSION" extension.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$SHA" \
+            --title "Release v$VERSION" \
+            --notes-file notes.md
 
   publish-store:
     needs: release
+    if: needs.release.outputs.released == 'true'
     uses: ./.github/workflows/publish-store.yml
     secrets: inherit
     with:
