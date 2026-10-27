@@ -148,4 +148,30 @@ describe("entering a lesson without a page load", () => {
 		expect(div.querySelector("textarea[data-extension='true']")).not.toBeNull();
 		expect(div.getAttribute("data-extension-processed")).toBe("true");
 	});
+
+	test("converts a match challenge once both text columns are in", async () => {
+		const div = createChallengeDiv("match");
+		document.body.appendChild(div);
+		await tick();
+
+		const grid = document.createElement("div");
+		const tile = (text, lang) => {
+			const wrapper = document.createElement("span");
+			const btn = document.createElement("button");
+			btn.setAttribute("lang", lang);
+			btn.setAttribute("data-test", `${text}-challenge-tap-token`);
+			btn.setAttribute("aria-disabled", "false");
+			const span = document.createElement("span");
+			span.setAttribute("data-test", "challenge-tap-token-text");
+			span.textContent = text;
+			btn.appendChild(span);
+			wrapper.appendChild(btn);
+			return wrapper;
+		};
+		grid.append(tile("water", "en"), tile("cat", "en"), tile("gato", "es"), tile("agua", "es"));
+		div.appendChild(grid);
+		await tick();
+
+		expect(div.querySelector("textarea[data-extension='true']")).not.toBeNull();
+	});
 });

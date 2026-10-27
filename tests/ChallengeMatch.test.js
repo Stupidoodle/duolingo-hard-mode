@@ -58,7 +58,7 @@ describe("issue #66 — listenMatch hard mode", () => {
 			expect(ChallengeMatch.isPairLayout(challengeDiv)).toBe(false);
 		});
 
-		test("rejects prompts that carry text, which is a layout it was never checked against", () => {
+		test("rejects a mix of audio and text prompts, a layout it was never checked against", () => {
 			const { challengeDiv } = buildMatch({ prompts: ["ja", "ein"], answers: ["ja", "ein"] });
 			const firstPrompt = challengeDiv.querySelector("button");
 			const text = document.createElement("span");
@@ -296,6 +296,74 @@ describe("issue #66 — listenMatch hard mode", () => {
 			input.value = "tu as";
 			challenge.handleKeyEvent(key("Backspace", { altKey: true }));
 			expect(input.value).toBe("tu ");
+		});
+	});
+
+	describe("issue #67 — match, with text in both columns", () => {
+		const MATCH = {
+			promptTexts: ["water", "cat", "milk", "dog", "mom"],
+			prompts: ["agua", "gato", "leche", "perro", "mamá"],
+			answers: ["agua", "perro", "leche", "gato", "mamá"],
+			promptLang: "en",
+			answerLang: "es"
+		};
+
+		test("accepts the live markup", () => {
+			const { challengeDiv } = buildMatch(MATCH);
+			expect(ChallengeMatch.isPairLayout(challengeDiv)).toBe(true);
+		});
+
+		test("rejects text columns that share a language, since the split could be wrong", () => {
+			const { challengeDiv } = buildMatch({ ...MATCH, answerLang: "en" });
+			expect(ChallengeMatch.isPairLayout(challengeDiv)).toBe(false);
+		});
+
+		test("rejects text columns without a language", () => {
+			const { challengeDiv } = buildMatch({ ...MATCH, promptLang: null, answerLang: null });
+			expect(ChallengeMatch.isPairLayout(challengeDiv)).toBe(false);
+		});
+
+		test("rejects a column whose tiles disagree on the language", () => {
+			const { challengeDiv, answers } = buildMatch(MATCH);
+			answers[0].setAttribute("lang", "en");
+			expect(ChallengeMatch.isPairLayout(challengeDiv)).toBe(false);
+		});
+
+		test("hides the learning-language column and keeps the prompts", () => {
+			const { page } = start(MATCH);
+
+			expect(page.answers.every(tile => tile.style.display === "none")).toBe(true);
+			expect(page.prompts.every(tile => tile.style.display !== "none")).toBe(true);
+			expect(page.selected()).toBe(page.prompts[0]);
+		});
+
+		test("reads the answer text without the hotkey number", () => {
+			const { page, challenge } = start(MATCH);
+
+			typeAndEnter(challenge, "agua");
+
+			expect(page.answers[0].getAttribute("aria-disabled")).toBe("true");
+		});
+
+		test("a whole challenge can be answered from the keyboard", async () => {
+			const { page, challenge } = start(MATCH);
+
+			for (const answer of ["agua", "gato", "leche", "perro", "mamá"]) {
+				typeAndEnter(challenge, answer);
+				await flush();
+			}
+
+			expect([...page.prompts, ...page.answers].every(tile => tile.getAttribute("aria-disabled") === "true")).toBe(true);
+			expect(page.hearts()).toBe(5);
+		});
+
+		test("folds the accent on mamá when accents are ignored", () => {
+			window.ignoreAccentsEnabled = true;
+			const { page, challenge } = start({ ...MATCH, promptTexts: ["mom", "cat"], prompts: ["mamá", "gato"], answers: ["gato", "mamá"] });
+
+			typeAndEnter(challenge, "mama");
+
+			expect(page.answers[1].getAttribute("aria-disabled")).toBe("true");
 		});
 	});
 

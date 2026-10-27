@@ -46,7 +46,7 @@ window.ignoreApostrophesEnabled = false;
 
 const SKIPPED_TYPES = ["completeReverseTranslation"];
 const CHOICE_TYPES = ["gapFill", "assist", "select", "selectTranscription"];
-const PAIR_TYPES = ["listenMatch"];
+const PAIR_TYPES = ["listenMatch", "match"];
 
 /**
  * Builds the challenge for a container, or returns null when the DOM it needs

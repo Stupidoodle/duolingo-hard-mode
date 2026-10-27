@@ -52,6 +52,17 @@ function tileText(tile){
 }
 
 /**
+ * The `lang` every tile of a column agrees on, or null if they do not.
+ * @param {HTMLButtonElement[]} tiles
+ * @returns {String|null}
+ */
+function columnLanguage(tiles){
+	const lang = tiles[0].getAttribute("lang");
+
+	return lang && tiles.every(tile => tile.getAttribute("lang") === lang) ? lang : null;
+}
+
+/**
  * The innermost element holding both nodes.
  * @param {HTMLElement} first
  * @param {HTMLElement} last
@@ -68,7 +79,7 @@ function commonAncestor(first, last){
 }
 
 /**
- * Challenge type: listenMatch
+ * Challenge types: listenMatch and match
  *
  * The answer column is hidden and has to be typed instead. Enter taps the
  * hidden tile carrying the typed text, so Duolingo pairs it with whichever
@@ -81,9 +92,14 @@ function commonAncestor(first, last){
  */
 export class ChallengeMatch{
 	/**
-	 * Whether the container holds the pair layout this class was verified
-	 * against: an even number of tiles, audio-only prompts in the first half and
-	 * a text answer in every tile of the second.
+	 * Whether the container holds a pair layout this class was verified against:
+	 * an even number of tiles with a text answer in every tile of the second
+	 * half, and a first half of either
+	 *
+	 * - audio-only prompts (listenMatch), or
+	 * - text prompts (match). Both columns hold text there, so each has to agree
+	 *   on one `lang` that differs from the other's — that is what shows the DOM
+	 *   splits between the columns rather than somewhere else.
 	 *
 	 * Also false while the tiles have not rendered yet, so the caller retries on
 	 * a later mutation instead of marking the container.
@@ -98,10 +114,25 @@ export class ChallengeMatch{
 			return false;
 		}
 
-		const half = tiles.length / 2;
+		const prompts = tiles.slice(0, tiles.length / 2);
+		const answers = tiles.slice(tiles.length / 2);
 
-		return tiles.slice(0, half).every(tile => !tile.querySelector(TEXT_SELECTOR))
-			&& tiles.slice(half).every(tile => tileText(tile).length > 0);
+		if(!answers.every(tile => tileText(tile).length > 0)){
+			return false;
+		}
+
+		if(prompts.every(tile => !tile.querySelector(TEXT_SELECTOR))){
+			return true;
+		}
+
+		if(!prompts.every(tile => tileText(tile).length > 0)){
+			return false;
+		}
+
+		const promptLanguage = columnLanguage(prompts);
+		const answerLanguage = columnLanguage(answers);
+
+		return promptLanguage !== null && answerLanguage !== null && promptLanguage !== answerLanguage;
 	}
 
 	/**
