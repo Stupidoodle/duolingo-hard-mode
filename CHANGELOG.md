@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.4.2...v1.5.0) (2026-10-27)
+
+
+### Features
+
+* add hard mode for listenMatch ([e2c6686](https://github.com/Stupidoodle/duolingo-hard-mode/commit/e2c6686e3f09696ef359f17166841f39f59c3cf3)), closes [#66](https://github.com/Stupidoodle/duolingo-hard-mode/issues/66)
+* add hard mode for match ([6322f2c](https://github.com/Stupidoodle/duolingo-hard-mode/commit/6322f2c7b4318c72b506a47188ad3152101f3498)), closes [#67](https://github.com/Stupidoodle/duolingo-hard-mode/issues/67)
+* **ci:** approve the store token with a short code ([218a855](https://github.com/Stupidoodle/duolingo-hard-mode/commit/218a855fd66648828965984d2a39caca6f2188c9))
+* **ci:** regenerate the store refresh token without a local secret ([2dfca40](https://github.com/Stupidoodle/duolingo-hard-mode/commit/2dfca4079fdba9cff7e04a22c3a0ef1d93e8a106))
+* **ci:** try to discover the store publisher id through the API ([2237b16](https://github.com/Stupidoodle/duolingo-hard-mode/commit/2237b16f8576f1db99050daf1f72a7b0eb742449))
+
+
+### Bug Fixes
+
+* **ci:** deliver the consent link through a secret gist ([c5b79da](https://github.com/Stupidoodle/duolingo-hard-mode/commit/c5b79da4b0c42b65299b7980ae627a7be8178036))
+* **ci:** drop the non-existent --secret flag on gh gist create ([38ca0ca](https://github.com/Stupidoodle/duolingo-hard-mode/commit/38ca0ca92fdef890a414906e655642141b45d022))
+* **ci:** hand over the consent link as an artifact ([1c0169d](https://github.com/Stupidoodle/duolingo-hard-mode/commit/1c0169de9217dec217e4c2b97ff83a4cc2e98389))
+* **ci:** read the v2 upload and publish states correctly ([743d210](https://github.com/Stupidoodle/duolingo-hard-mode/commit/743d210f3c83d79fd893ece7138b8ff0e2238b2e))
+* **ci:** replace the dead out-of-band redirect with a loopback one ([96e0fe3](https://github.com/Stupidoodle/duolingo-hard-mode/commit/96e0fe34e1274eb93743edb085f437c503a0eb52))
+* let typing claim word bank bubbles that span several words ([10381bc](https://github.com/Stupidoodle/duolingo-hard-mode/commit/10381bce405e6141a92669f5e1811cb43d8867d9)), closes [#64](https://github.com/Stupidoodle/duolingo-hard-mode/issues/64)
+* make the store auth script usable from a real terminal ([f254d53](https://github.com/Stupidoodle/duolingo-hard-mode/commit/f254d5385f8e33ce5dd8815970eab6d6708bd064))
+
 ### [1.4.2](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.4.1...v1.4.2) (2026-10-26)
 
 
