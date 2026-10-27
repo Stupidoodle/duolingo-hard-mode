@@ -23,6 +23,12 @@ import{
 	CONSTANTS
 } from "./constants.js";
 
+// How long a tap waits for a bubble that is still disabled from Duolingo's
+// animation before clicking anyway, so a bubble that never re-enables cannot
+// stall every tap queued behind it.
+const TAP_WAIT_LIMIT_MS = 1000;
+const TAP_POLL_MS = 30;
+
 /**
  * Abstract class for all challenges
  * @abstract
@@ -60,7 +66,57 @@ export class Challenge{
 
 		console.debug(this.elements);
 		console.debug(this.wordBank);
+		/** @type {HTMLElement[]} Clicks waiting for their turn, oldest first */
+		this.tapQueue = [];
+		this.tapTimer = null;
+		this.tapWaitStarted = null;
+
 		this.eventManager.registerChallenge(this.challengeId, this);
+	}
+
+	/**
+	 * Clicks a bubble (or the submit button), in order with every earlier click.
+	 *
+	 * Duolingo animates a released bubble back into the bank and keeps it
+	 * aria-disabled until it lands, ignoring clicks meanwhile. Clicking in that
+	 * window left a word recorded as placed but missing from the answer (#91).
+	 * A target that is still disabled is clicked once it re-enables, and every
+	 * click queued after it waits its turn, so the answer keeps the typed order.
+	 *
+	 * @param {HTMLElement|null} target
+	 */
+	tap(target){
+		if(!target){
+			return;
+		}
+
+		this.tapQueue.push(target);
+		this.drainTaps();
+	}
+
+	/**
+	 * Clicks queued targets until one is still disabled, then polls for it.
+	 */
+	drainTaps(){
+		while(this.tapQueue.length > 0){
+			const target = this.tapQueue[0];
+
+			if(target.getAttribute("aria-disabled") === "true"){
+				this.tapWaitStarted ??= Date.now();
+
+				if(Date.now() - this.tapWaitStarted < TAP_WAIT_LIMIT_MS){
+					this.tapTimer ??= setTimeout(() => {
+						this.tapTimer = null;
+						this.drainTaps();
+					}, TAP_POLL_MS);
+					return;
+				}
+			}
+
+			this.tapQueue.shift();
+			this.tapWaitStarted = null;
+			target.click();
+		}
 	}
 
 	/**
@@ -320,8 +376,9 @@ export class Challenge{
 		const target = this.normalizeWord(word);
 		const wordBankDiv = this.elements.wordBank;
 
+		// Disabled copies are kept: one still animating into the answer row is
+		// disabled for a moment, and tap() waits for it.
 		const matches = [...document.querySelectorAll("button[data-test*='challenge-tap-token']")]
-			.filter(button => button.getAttribute("aria-disabled") === "false")
 			.filter(button => !wordBankDiv?.contains(button))
 			.filter(button => {
 				const text = readTokenText(
@@ -352,7 +409,7 @@ export class Challenge{
 			const availableBefore = this.remainingChoices.wordMap.get(releasedWord)?.length ?? 0;
 
 			this.remainingChoices.returnLastUsed(releasedWord);
-			this.findAnswerButton(releasedWord)?.click();
+			this.tap(this.findAnswerButton(releasedWord));
 
 			// Handing the button back is what shrinks the used count. If the pool
 			// did not actually grow — it has no record of this word — the next
@@ -454,9 +511,74 @@ export class Challenge{
 			return;
 		}
 
+		// "a" while typing "are": claiming it now would only release it on the
+		// next keystroke. Space, Enter or the next word settles it instead.
+		if(this.startsLongerBubble(matchingKey)){
+			return;
+		}
+
 		console.debug(`Claiming ${matchingKey}`);
 
-		this.remainingChoices.selectWord(matchingKey)?.click();
+		this.tap(this.remainingChoices.selectWord(matchingKey));
+	}
+
+	/**
+	 * Whether a still-available bubble begins with this one, so the word being
+	 * typed may yet turn into it ("a" → "are", "tu" → "tu as").
+	 *
+	 * @param {String} key - Word bank key
+	 * @returns {Boolean}
+	 */
+	startsLongerBubble(key){
+		const prefix = this.normalizeWord(key);
+
+		for(const [other, buttons] of this.remainingChoices.wordMap){
+			if(other === key || buttons.length === 0){
+				continue;
+			}
+
+			const candidate = this.normalizeWord(other);
+
+			if(candidate.length > prefix.length && candidate.startsWith(prefix)){
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Claims every word already followed by a space that has no bubble yet.
+	 *
+	 * A word deferred by startsLongerBubble is settled once the next word starts;
+	 * running before the trailing word is claimed keeps the typed order.
+	 */
+	claimSettledWords(){
+		const text = this.elements.inputField.value;
+		const words = this.splitWords(text);
+		const settled = /\s$/.test(text) ? words : words.slice(0, -1);
+		const required = new Map();
+
+		for(const word of settled){
+			const key = this.matchKey(this.wordBank.wordMap, word);
+
+			if(key){
+				required.set(key, (required.get(key) ?? 0) + 1);
+			}
+		}
+
+		for(const [key, count] of required){
+			for(let missing = count - this.usedCount(key); missing > 0; missing--){
+				const button = this.remainingChoices.selectWord(key);
+
+				if(!button){
+					break;
+				}
+
+				console.debug(`Settling ${key}`);
+				this.tap(button);
+			}
+		}
 	}
 
 	/**
@@ -468,6 +590,7 @@ export class Challenge{
 	 */
 	handleInput(){
 		this.releaseWords(this.splitWords(this.elements.inputField.value));
+		this.claimSettledWords();
 		this.claimTrailingWord();
 	}
 
@@ -498,22 +621,22 @@ export class Challenge{
 			if(firstMatchingKey && secondMatchingKey){
 				console.debug(`Selected ${firstMatchingKey} and ${secondMatchingKey}`);
 
-				this.remainingChoices.selectWord(firstMatchingKey).click();
+				this.tap(this.remainingChoices.selectWord(firstMatchingKey));
 				//FIXME
-				this.remainingChoices.selectWord(secondMatchingKey)?.click();
+				this.tap(this.remainingChoices.selectWord(secondMatchingKey));
 				this.elements.inputField.value += " ";
 			}
 			else if(secondMatchingKey){
 				// NOTE: This could lead to unexpected behaviour
 				console.debug(`Selected ${secondMatchingKey}`);
 
-				this.remainingChoices.selectWord(secondMatchingKey).click();
+				this.tap(this.remainingChoices.selectWord(secondMatchingKey));
 				this.elements.inputField.value += " ";
 			}
 			else if(this.matchKey(this.remainingChoices.wordMap, userInput)){
 				console.debug(`Selected ${userInput}`);
 
-				this.remainingChoices.selectWord(userInput).click();
+				this.tap(this.remainingChoices.selectWord(userInput));
 				this.elements.inputField.value += " ";
 			}
 			else{
@@ -534,7 +657,7 @@ export class Challenge{
 			if (matchingKey) {
 				console.debug(`Selected ${matchingKey}`);
 
-				this.remainingChoices.selectWord(matchingKey).click();
+				this.tap(this.remainingChoices.selectWord(matchingKey));
 				this.elements.inputField.value += " ";
 			} else {
 				console.warn(`Word ${userInput} not found in choices ${Array.from(this.remainingChoices.wordMap.keys())}`);
@@ -566,7 +689,7 @@ export class Challenge{
 			if(!this.isTrailingWordClaimed()){
 				console.debug(`Selected ${matchingKey}`);
 
-				this.remainingChoices.selectWord(matchingKey)?.click();
+				this.tap(this.remainingChoices.selectWord(matchingKey));
 			}
 
 			this.handleSubmit();
@@ -590,7 +713,7 @@ export class Challenge{
 		if(matchingKeyAfterApostrophe){
 			console.debug(`Selected ${matchingKeyAfterApostrophe}`);
 
-			this.remainingChoices.selectWord(matchingKeyAfterApostrophe)?.click();
+			this.tap(this.remainingChoices.selectWord(matchingKeyAfterApostrophe));
 			this.elements.inputField.value += " ";
 
 			// This is not silly wtf
@@ -625,7 +748,7 @@ export class Challenge{
 		if(matchingKey){
 			console.debug(`Selected ${matchingKey}`);
 
-			this.remainingChoices.selectWord(matchingKey).click();
+			this.tap(this.remainingChoices.selectWord(matchingKey));
 
 			this.handleSpace = this.handleSpaceAfterApostrophe;
 		}
@@ -728,6 +851,7 @@ export class Challenge{
 	 * Submits the challenge
 	 */
 	handleSubmit() {
-		this.elements.submitButton.click();
+		// Queued so it lands after any bubble still waiting on an animation.
+		this.tap(this.elements.submitButton);
 	}
 }

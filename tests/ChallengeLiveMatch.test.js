@@ -58,11 +58,25 @@ describe("issue #29 — the word bank is matched without pressing space", () => 
 	test("an exact match claims its bubble as soon as it is typed", () => {
 		const { challenge, clicked } = setup();
 
+		type(challenge, "applepie");
+
+		expect(available(challenge, "applepie")).toBe(0);
+		expect(clicked).toHaveLength(1);
+		expect(textOf(clicked[0])).toBe("applepie");
+	});
+
+	// Issue #91: claiming "apple" while "applepie" may follow released it again
+	// a keystroke later, racing Duolingo's return animation.
+	test("a match that may still grow into a longer bubble waits for space", () => {
+		const { challenge, clicked } = setup();
+
 		type(challenge, "apple");
+		expect(clicked).toHaveLength(0);
+
+		challenge.handleSpace();
 
 		expect(available(challenge, "apple")).toBe(0);
-		expect(clicked).toHaveLength(1);
-		expect(textOf(clicked[0])).toBe("apple");
+		expect(clicked.map(textOf)).toEqual(["apple"]);
 	});
 
 	test("typing past a match hands the bubble back", () => {
@@ -103,6 +117,7 @@ describe("issue #29 — the word bank is matched without pressing space", () => 
 		type(challenge, "applepie");
 		challenge.handleSpace();
 		type(challenge, "applepie cat");
+		challenge.handleSpace();
 
 		expect(available(challenge, "applepie")).toBe(0);
 		expect(available(challenge, "cat")).toBe(0);
