@@ -10,13 +10,13 @@ what sets the expectation a one-star review is written against.
 Duolingo Hard Mode — type instead of tap
 ```
 
-The old name was just "Duolingo Hard Mode". The suffix is what people search
-for and it states the mechanic before the click.
+The suffix is what people search for and it states the mechanic before the
+click.
 
 ## Short description (132 character limit)
 
 ```
-Hides Duolingo's word bank and makes you type the answer. Real recall instead of picking from four options.
+Hides Duolingo's word bank and answer choices so you type every answer. Real recall instead of tapping bubbles.
 ```
 
 ## Detailed description
@@ -32,20 +32,26 @@ of recognising it.
 
 WHAT IT DOES
 
-• Replaces the word-bank tiles with a typing field
-• Matches what you type against the hidden words as you go, so a word is locked
-  in the moment you spell it — no trailing space needed
+• Translations and fill-in-the-blank: the word bank is hidden. Type the
+  sentence and each bubble fills in the moment you finish its word
+• Multiple choice: the options stay hidden until you type one
+• Chat replies: type the reply, punctuation optional
+• Matching pairs: hear or read a prompt, type its partner, press Enter
+• Conjugation tables and cloze exercises: type the missing words and endings
+• Duolingo still grades every answer itself; the extension only does the tapping
 • Ctrl+Backspace deletes a whole word, like every other text field you use
-• Optional: ignore accents, so "esta" matches "está"
+• Optional: ignore accents, so "esta" matches "está" and "soeur" matches "sœur"
 • Optional: ignore apostrophes, so "dont" matches "don't"
-• Toggle it off mid-lesson whenever you want the tiles back
+• Toggle it off mid-lesson whenever you want the bubbles back
 
 WORKS WITH
 
-• Translate and tap-complete exercises
-• Multiple-choice and listening exercises
-• Japanese and Chinese, including furigana and pinyin readings
+• Every course that uses word banks, multiple choice or matching pairs
+• Japanese and Chinese, including furigana and pinyin readings and IME input
 • Light and dark mode, following whatever Duolingo is using
+
+Exercises that already make you type are left alone, and speaking exercises
+can't be typed.
 
 WHAT IT IS NOT
 
@@ -54,7 +60,7 @@ with Duolingo. It does not touch your account, your streak, or your progress —
 it changes what is on the screen in front of you and nothing else. No analytics,
 no accounts, no network requests of its own.
 
-Open source: https://github.com/Stupidoodle/duolingo-hard-mode
+Source code: https://github.com/Stupidoodle/duolingo-hard-mode
 ```
 
 ## Category and language
@@ -63,7 +69,8 @@ Category `Education`. Primary language English.
 
 ## Privacy
 
-Single purpose: "Replace Duolingo's word-bank exercises with a typing input."
+Single purpose: "Replace Duolingo's word-bank and multiple-choice exercises with
+a typing input."
 
 Permission justification for `storage`: "Stores four on/off preferences —
 whether hard mode is active, whether to ignore accents, whether to ignore
@@ -77,21 +84,28 @@ plainly because reviewers of a learning-app extension are right to wonder.
 
 ## Screenshots
 
-`store/screenshots/` holds three captures at the required 1280×800, taken from
-a real lesson rather than mocked up:
+`store/screenshots/` holds five captures at the required 1280×800, each a real
+lesson in the 1.7.0 build with a caption above it:
 
 | file | shows |
 | --- | --- |
-| `01-hero-typing.png` | Japanese translate exercise with a word typed into the input |
-| `02-typing-active.png` | Multiple-choice exercise converted to typing |
-| `03-before-wordbank.png` | The same exercise with hard mode off, word bank restored |
+| `01-hero.png` | The same translation with the word bank, and with hard mode typing it |
+| `02-translate.png` | A Spanish translation typed, every bubble filled in |
+| `03-multiple-choice.png` | A multiple-choice exercise answered by typing |
+| `04-pairs.png` | Matching pairs, two locked in and the third being typed |
+| `05-dark.png` | Dark mode |
 
-Order them hero first. The store crops aggressively in the grid view, so the
+Order them as numbered. The store crops aggressively in the grid view, so the
 first image carries the pitch on its own.
 
-Still worth adding, and not yet made:
+## Promo tiles
 
-- A short screencast. The before/after toggle is the whole product and it reads
-  far better in motion than as two stills.
-- A 440×280 small promo tile, which the store needs for any chance of
-  featuring.
+`store/promo/small-440x280.png` is the small tile the store needs before it will
+consider an item for featuring; `store/promo/marquee-1400x560.png` is the
+optional marquee. Neither uses Duolingo's logo or mascot.
+
+## Video
+
+The listing takes a YouTube URL. The before/after recording in
+`docs/demo.gif` reads far better in motion than any still; upload it (or the
+MP4 cut of it) to YouTube and paste the link.
