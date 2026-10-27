@@ -80,7 +80,7 @@ Because everything keys off Duolingo's `data-test` attributes, **a Duolingo DOM 
 Challenge construction is deliberately split:
 
 - **Factory path** — `ChallengeFactory.create(type, challengeDiv, eventManager)`. Types are registered at the top of `content.js` (`translate`, `tapComplete`, `listenTap`). `ChallengeFactory.register` rejects any class that does not extend `Challenge`.
-- **Direct-construction path** — `gapFill`, `assist`, `select`, and `selectTranscription` bypass the factory and construct `ChallengeGapFill` directly, because it takes an extra `choiceDiv` argument (`div[aria-label="choice"][role="radiogroup"]`, which lives outside the challenge div) and **does not extend `Challenge`** — so it cannot be registered with the factory.
+- **Direct-construction path** — `gapFill`, `assist`, `select`, `selectTranscription` and `dialogue` bypass the factory and construct `ChallengeGapFill` directly, because it takes an extra `choiceDiv` argument (`div[aria-label="choice"][role="radiogroup"]`, which lives outside the challenge div) and **does not extend `Challenge`** — so it cannot be registered with the factory.
 
 - **Pairs path** — `listenMatch` and `match` (`PAIR_TYPES`) construct the standalone `ChallengeMatch`, but only once `ChallengeMatch.isPairLayout` accepts the tiles; until then `buildChallenge` returns null and the container stays unmarked.
 
@@ -92,7 +92,7 @@ Already typing natively, so deliberately left alone: `completeReverseTranslation
 
 - `Challenge` (abstract, `src/Challenge.js`) — the bulk of the logic. Creates the `<textarea data-extension="true">`, maps typed words onto word-bank buttons, handles space/backspace/enter/apostrophe, and manages focus. Subclasses override `extractElements()` and challenge-specific bits.
 - `ChallengeTranslate`, `ChallengeTapComplete` — thin subclasses of `Challenge`.
-- `ChallengeGapFill` — standalone; drives radio-button choices via `ChoiceBank` instead of a word bank.
+- `ChallengeGapFill` — standalone; drives radio-button choices via `ChoiceBank` instead of a word bank. Choices are compared through `comparable()` (leniency settings plus `normalizeSentence`), because `dialogue` choices are whole sentences with punctuation and French no-break spaces.
 - `ChallengeMatch` — standalone; hides the answer column of a pairs challenge and makes Enter tap the hidden tile whose text was typed. Typing alone never taps: **a wrong pair costs a heart**. Duolingo shows tile selection only through the Web Animations API (no attribute, no class), so the class never infers it; it taps a prompt itself only when nothing can be selected (fresh challenge, or right after a pair locks in, seen as `aria-disabled="true"` through its own attribute observer).
 - `WordBank` — LIFO pool over `button[data-test*='challenge-tap-token']`. `selectWord` pops the **last** available button for a word and pushes it onto `usedWordButtons`; `returnLastUsed` pops that stack back. Duplicate words in one sentence rely on this stack discipline — bugs about the wrong bubble being removed live here.
 - `ChoiceBank` — same idea for `[data-test="challenge-choice"]` radio options.

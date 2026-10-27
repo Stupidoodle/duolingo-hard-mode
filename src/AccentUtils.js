@@ -35,6 +35,24 @@ export function normalizeApostrophes(str) {
 }
 
 /**
+ * Drops sentence punctuation and collapses whitespace, so a whole-sentence
+ * choice can be typed without either. `\s` also covers the no-break and narrow
+ * no-break spaces French typography puts before ? and !.
+ *
+ * Apostrophes and hyphens are left alone: they belong to words ("l'eau",
+ * "est-ce"), and apostrophes have their own setting.
+ *
+ * @param {string} str - The input string.
+ * @returns {string} - The string without punctuation, single-spaced.
+ */
+export function normalizeSentence(str) {
+	return str
+		.replace(/[.,!?¿¡;:…"“”«»()]/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+/**
  * Lowercases a string and applies whichever normalizations are switched on.
  *
  * @param {string} str - The input string.

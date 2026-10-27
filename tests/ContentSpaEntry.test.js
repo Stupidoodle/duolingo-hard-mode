@@ -125,6 +125,20 @@ describe("entering a lesson without a page load", () => {
 		expect(document.querySelector("textarea[data-extension='true']")).not.toBeNull();
 	});
 
+	test("converts a dialogue challenge whose radiogroup arrives inside the container", async () => {
+		const div = createChallengeDiv("dialogue");
+		document.body.appendChild(div);
+		await tick();
+
+		expect(div.hasAttribute("data-extension-processed")).toBe(false);
+
+		div.appendChild(createChoiceGroup(["Por favor, gracias.", "Un taco, por favor."]));
+		await tick();
+
+		expect(document.querySelector("textarea[data-extension='true']")).not.toBeNull();
+		expect(div.getAttribute("data-extension-processed")).toBe("true");
+	});
+
 	test("leaves a challenge that never gets a word bank alone, without marking it", async () => {
 		const div = createChallengeDiv("translate");
 		document.body.appendChild(div);

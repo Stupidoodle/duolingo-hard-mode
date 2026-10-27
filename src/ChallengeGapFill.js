@@ -11,7 +11,8 @@ import{
 } from "./ExtensionEventManager.js";
 
 import{
-	getMatchingKey
+	normalizeForMatch,
+	normalizeSentence
 } from "./AccentUtils.js";
 
 import{
@@ -135,10 +136,7 @@ export class ChallengeGapFill{
 			this.handleSpace();
 		}
 		else if(key === "Enter"){
-			let userInput = this.elements.inputField.value.trim().toLowerCase();
-
-			const matchingKey = getMatchingKey(this.choiceBank.choiceMap, userInput,
-			window.ignoreAccentsEnabled, window.ignoreApostrophesEnabled);
+			const matchingKey = this.matchChoice(this.elements.inputField.value);
 
 			if(matchingKey){
 				console.debug(`Selecting choice: ${matchingKey}`);
@@ -160,6 +158,56 @@ export class ChallengeGapFill{
 	}
 
 	/**
+	 * The form a choice and the typed text are compared in: the leniency settings
+	 * applied, sentence punctuation dropped and whitespace collapsed. Choices can
+	 * be whole sentences (dialogue), and nobody types "Un taco, por favor." with
+	 * its comma and full stop.
+	 *
+	 * @param {String} text
+	 * @returns {String}
+	 */
+	comparable(text){
+		return normalizeSentence(normalizeForMatch(text, {
+			ignoreAccents: window.ignoreAccentsEnabled,
+			ignoreApostrophes: window.ignoreApostrophesEnabled
+		}));
+	}
+
+	/**
+	 * The choice whose text the input spells out, if any.
+	 * @param {String} input
+	 * @returns {String|null} Choice bank key
+	 */
+	matchChoice(input){
+		const typed = this.comparable(input);
+
+		if(!typed){
+			return null;
+		}
+
+		for(const choice of this.choiceBank.choiceMap.keys()){
+			if(this.comparable(choice) === typed){
+				return choice;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Whether the input is the opening words of some choice, so a space after it
+	 * continues a sentence rather than ending a wrong answer.
+	 * @param {String} input
+	 * @returns {Boolean}
+	 */
+	startsChoice(input){
+		const typed = this.comparable(input);
+
+		return typed.length > 0 && [...this.choiceBank.choiceMap.keys()]
+			.some(choice => this.comparable(choice).startsWith(typed + " "));
+	}
+
+	/**
 	 * Handles space key event
 	 */
 	handleSpace(){
@@ -171,8 +219,11 @@ export class ChallengeGapFill{
 			return;
 		}
 
-		const matchingKey = getMatchingKey(this.choiceBank.choiceMap, userInput,
-			window.ignoreAccentsEnabled, window.ignoreApostrophesEnabled);
+		const matchingKey = this.matchChoice(userInput);
+
+		if(!matchingKey && this.startsChoice(userInput)){
+			return;
+		}
 
 		if(matchingKey){
 			console.debug(`Selecting choice: ${matchingKey}`);

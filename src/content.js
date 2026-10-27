@@ -45,7 +45,7 @@ window.ignoreAccentsEnabled = false;
 window.ignoreApostrophesEnabled = false;
 
 const SKIPPED_TYPES = ["completeReverseTranslation"];
-const CHOICE_TYPES = ["gapFill", "assist", "select", "selectTranscription"];
+const CHOICE_TYPES = ["gapFill", "assist", "select", "selectTranscription", "dialogue"];
 const PAIR_TYPES = ["listenMatch", "match"];
 
 /**
