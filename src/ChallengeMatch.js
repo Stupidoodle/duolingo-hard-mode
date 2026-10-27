@@ -222,6 +222,8 @@ export class ChallengeMatch{
 		inputField.setAttribute("spellcheck", "false");
 		inputField.setAttribute("placeholder", "Type here...");
 		inputField.style.cssText = withFallbackTokens(CONSTANTS.STYLE.INPUT);
+		// The tile column has no bottom margin, so the textarea would touch it.
+		inputField.style.marginTop = "16px";
 
 		this.elements.tiles.parentNode.insertBefore(inputField, this.elements.tiles.nextSibling);
 
