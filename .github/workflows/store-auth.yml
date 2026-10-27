@@ -16,7 +16,7 @@ on:
         description: "device (recommended), url, or exchange"
         required: true
         type: choice
-        options: [device, url, exchange]
+        options: [device, url, exchange, publisher]
         default: device
       code:
         description: "Authorization code, only for step=exchange"
@@ -34,6 +34,45 @@ jobs:
   auth:
     runs-on: ubuntu-latest
     steps:
+      - name: Discover and store the publisher id
+        if: inputs.step == 'publisher'
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          TOKEN=$(curl -s -X POST \
+            -d "client_id=$CLIENT_ID" -d "client_secret=$CLIENT_SECRET" \
+            -d "refresh_token=$REFRESH_TOKEN" -d "grant_type=refresh_token" \
+            "https://oauth2.googleapis.com/token" | jq -r '.access_token // empty')
+          if [ -z "$TOKEN" ]; then echo "Token refresh failed."; exit 1; fi
+          echo "::add-mask::$TOKEN"
+
+          # The publisher id normally comes from the dashboard. Many Google APIs
+          # accept "-" as a wildcard for a parent collection and return the real
+          # resource name, which embeds the id. A read-only status call is
+          # enough to find out whether this one does.
+          for CANDIDATE in "-" "me"; do
+            RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
+              "https://chromewebstore.googleapis.com/v2/publishers/$CANDIDATE/items/$EXTENSION_ID:fetchStatus")
+            NAME=$(echo "$RESPONSE" | jq -r '.name // empty')
+            echo "publishers/$CANDIDATE -> ${NAME:-$(echo "$RESPONSE" | jq -c '.error // {}' )}"
+
+            PUBLISHER=$(echo "$NAME" | sed -n 's#^publishers/\([^/]*\)/items/.*#\1#p')
+            if [ -n "$PUBLISHER" ] && [ "$PUBLISHER" != "-" ] && [ "$PUBLISHER" != "me" ]; then
+              printf '%s' "$PUBLISHER" | gh secret set CHROME_PUBLISHER_ID --repo "$REPO"
+              echo "CHROME_PUBLISHER_ID set to $PUBLISHER"
+              exit 0
+            fi
+          done
+
+          echo "The API did not resolve the publisher id from a wildcard."
+          echo "It has to be copied from Developer Dashboard > Publisher > Settings."
+          exit 1
+
       - name: Approve with a short code
         if: inputs.step == 'device'
         env:
