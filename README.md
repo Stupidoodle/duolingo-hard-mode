@@ -16,7 +16,7 @@ After:
 ## Features
 
 - Hides the word bank and the answer choices and makes you type instead, in:
-  - **Translations and fill-in-the-blanks** with a word bank (`translate`, `tapComplete`, `listenTap`), including bubbles that hold several words
+  - **Translations, fill-in-the-blanks and conjugation tables** with a word bank (`translate`, `tapComplete`, `listenTap`, `tapCloze`, `tapClozeTable`, `tapCompleteTable`), including bubbles that hold several words
   - **Multiple choice** (`select`, `assist`, `gapFill`, `selectTranscription`)
   - **Chat replies** (`dialogue`): type the sentence, punctuation optional
   - **Matching pairs** (`match`, `listenMatch`): tap or hear a prompt, type its partner, press Enter
@@ -49,7 +49,6 @@ Challenges that already ask you to type (`listenComplete`, `completeReverseTrans
 
 ## Future Plans 🚧
 
-- Hard mode for `tapCloze` and `tapCompleteTable`
 - Add answer validation hints
 - Implement smart autocomplete prevention
 - Add typing statistics and error tracking
