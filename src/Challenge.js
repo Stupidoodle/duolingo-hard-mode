@@ -377,9 +377,12 @@ export class Challenge{
 		const wordBankDiv = this.elements.wordBank;
 
 		// Disabled copies are kept: one still animating into the answer row is
-		// disabled for a moment, and tap() waits for it.
+		// disabled for a moment, and tap() waits for it. Invisible ones are not:
+		// table and cloze blanks hold a hidden copy of every choice, and tapping
+		// one in an empty row does nothing (#93).
 		const matches = [...document.querySelectorAll("button[data-test*='challenge-tap-token']")]
 			.filter(button => !wordBankDiv?.contains(button))
+			.filter(button => getComputedStyle(button).visibility !== "hidden")
 			.filter(button => {
 				const text = readTokenText(
 					button.querySelector("[data-test='challenge-tap-token-text']")
