@@ -4,7 +4,8 @@ name: Sync Chrome Web Store
 # (NOT_UPDATEABLE), so a release cut during a review cannot reach it straight
 # away and publish-store.yml only warns. This checks a few times a day and
 # publishes the newest GitHub release once nothing is in review and the store
-# is still behind it.
+# is still behind it. A release the store rejected or cancelled is never
+# resubmitted: the run fails instead, which notifies the maintainer.
 
 on:
   schedule:
@@ -59,21 +60,33 @@ jobs:
             "https://chromewebstore.googleapis.com/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:fetchStatus")
           echo "$STATUS" | jq '{published: .publishedItemRevisionStatus, submitted: .submittedItemRevisionStatus}'
 
-          if [ "$(echo "$STATUS" | jq -r '.submittedItemRevisionStatus.state // empty')" = "PENDING_REVIEW" ]; then
+          SUBMITTED_STATE=$(echo "$STATUS" | jq -r '.submittedItemRevisionStatus.state // empty')
+          SUBMITTED=$(echo "$STATUS" | jq -r '[.submittedItemRevisionStatus.distributionChannels[]?.crxVersion][0] // empty')
+
+          if [ "$SUBMITTED_STATE" = "PENDING_REVIEW" ]; then
             echo "A version is still in review; the store will not take another yet."
             echo "behind=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # The newest version the store holds that has not been turned down.
+          # Every version the store has seen, whatever became of it. Leaving
+          # rejected ones out would make a rejected release look "behind" and
+          # resubmit it on every run without anyone reading why it was refused,
+          # which can count against the developer account.
           STORE=$(echo "$STATUS" | jq -r '
             [.publishedItemRevisionStatus, .submittedItemRevisionStatus]
-            | map(select(. != null and .state != "REJECTED" and .state != "CANCELLED"))
+            | map(select(. != null))
             | map(.distributionChannels[]?.crxVersion)
             | max_by(split(".") | map(tonumber)) // "0"')
-
           NEWEST=$(printf '%s\n%s\n' "$STORE" "$LATEST" | sort -V | tail -1)
           echo "store: $STORE, latest release: $LATEST"
+
+          if [ "$LATEST" = "$SUBMITTED" ] && { [ "$SUBMITTED_STATE" = "REJECTED" ] || [ "$SUBMITTED_STATE" = "CANCELLED" ]; }; then
+            # Failing the scheduled run is what notifies the maintainer.
+            echo "::error::v$LATEST was $SUBMITTED_STATE by the Chrome Web Store. store-sync will not resubmit it; check the developer dashboard, fix the cause and cut a new release."
+            echo "behind=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
 
           if [ "$LATEST" != "$STORE" ] && [ "$NEWEST" = "$LATEST" ]; then
             echo "behind=true" >> "$GITHUB_OUTPUT"
