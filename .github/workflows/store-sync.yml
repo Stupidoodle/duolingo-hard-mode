@@ -1,0 +1,90 @@
+name: Sync Chrome Web Store
+
+# The store refuses every upload while an earlier version is in review
+# (NOT_UPDATEABLE), so a release cut during a review cannot reach it straight
+# away and publish-store.yml only warns. This checks a few times a day and
+# publishes the newest GitHub release once nothing is in review and the store
+# is still behind it.
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.compare.outputs.tag }}
+      behind: ${{ steps.compare.outputs.behind }}
+    steps:
+      - name: Refresh access token
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          RESPONSE=$(curl -s -X POST \
+            -d "client_id=$CLIENT_ID" \
+            -d "client_secret=$CLIENT_SECRET" \
+            -d "refresh_token=$REFRESH_TOKEN" \
+            -d "grant_type=refresh_token" \
+            "https://oauth2.googleapis.com/token")
+
+          ACCESS_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token // empty')
+
+          if [ -z "$ACCESS_TOKEN" ]; then
+            # Print only the error fields; the response can carry a token.
+            echo "Token refresh failed."
+            echo "$RESPONSE" | jq -r '"error: \(.error // "unknown")\ndescription: \(.error_description // "none")"'
+            exit 1
+          fi
+
+          echo "::add-mask::$ACCESS_TOKEN"
+          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> "$GITHUB_ENV"
+
+      - name: Compare the store with the latest release
+        id: compare
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          TAG=$(gh release view --repo "$REPO" --json tagName -q .tagName)
+          LATEST=${TAG#v}
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          STATUS=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
+            "https://chromewebstore.googleapis.com/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:fetchStatus")
+          echo "$STATUS" | jq '{published: .publishedItemRevisionStatus, submitted: .submittedItemRevisionStatus}'
+
+          if [ "$(echo "$STATUS" | jq -r '.submittedItemRevisionStatus.state // empty')" = "PENDING_REVIEW" ]; then
+            echo "A version is still in review; the store will not take another yet."
+            echo "behind=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The newest version the store holds that has not been turned down.
+          STORE=$(echo "$STATUS" | jq -r '
+            [.publishedItemRevisionStatus, .submittedItemRevisionStatus]
+            | map(select(. != null and .state != "REJECTED" and .state != "CANCELLED"))
+            | map(.distributionChannels[]?.crxVersion)
+            | max_by(split(".") | map(tonumber)) // "0"')
+
+          NEWEST=$(printf '%s\n%s\n' "$STORE" "$LATEST" | sort -V | tail -1)
+          echo "store: $STORE, latest release: $LATEST"
+
+          if [ "$LATEST" != "$STORE" ] && [ "$NEWEST" = "$LATEST" ]; then
+            echo "behind=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "behind=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: check
+    if: needs.check.outputs.behind == 'true'
+    uses: ./.github/workflows/publish-store.yml
+    secrets: inherit
+    with:
+      tag: ${{ needs.check.outputs.tag }}
