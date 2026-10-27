@@ -3,13 +3,21 @@
  * Utility functions to normalize text before matching it against the word bank.
  */
 
+// Ligatures are letters of their own rather than a base letter plus a combining
+// mark, so NFD leaves them alone and they have to be spelled out explicitly.
+const LIGATURES = { "œ": "oe", "Œ": "OE", "æ": "ae", "Æ": "AE" };
+
 /**
- * Removes accents from a string using Unicode normalization.
+ * Removes accents from a string using Unicode normalization, and spells out the
+ * œ and æ ligatures that most keyboards cannot type.
  * @param {string} str - The input string.
  * @returns {string} - The normalized string without diacritics.
  */
 export function normalizeText(str) {
-	return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+	return str
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.replace(/[œŒæÆ]/g, ligature => LIGATURES[ligature]);
 }
 
 /**
