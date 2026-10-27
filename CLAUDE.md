@@ -81,7 +81,7 @@ Because everything keys off Duolingo's `data-test` attributes, **a Duolingo DOM 
 Challenge construction is deliberately split:
 
 - **Factory path** — `ChallengeFactory.create(type, challengeDiv, eventManager)`. Types are registered at the top of `content.js` (`translate`, `tapComplete`, `listenTap`, and `tapCloze`/`tapClozeTable`/`tapCompleteTable`, which fill sentence or table blanks from the same word bank). `ChallengeFactory.register` rejects any class that does not extend `Challenge`.
-- **Direct-construction path** — `gapFill`, `assist`, `select`, `selectTranscription`, `dialogue` and `definition` bypass the factory and construct `ChallengeGapFill` directly, because it takes an extra `choiceDiv` argument (`div[aria-label="choice"][role="radiogroup"]`, which lives outside the challenge div) and **does not extend `Challenge`** — so it cannot be registered with the factory.
+- **Direct-construction path** — `gapFill`, `assist`, `select`, `selectTranscription`, `dialogue` and `definition` bypass the factory and construct `ChallengeGapFill` directly, because it takes an extra `choiceDiv` argument (`div[aria-label="choice"][role="radiogroup"]`, found document-wide: it sits outside the challenge div for `select`/`assist`, inside it for `dialogue`/`definition`) and **does not extend `Challenge`** — so it cannot be registered with the factory.
 
 - **Pairs path** — `listenMatch` and `match` (`PAIR_TYPES`) construct the standalone `ChallengeMatch`, but only once `ChallengeMatch.isPairLayout` accepts the tiles; until then `buildChallenge` returns null and the container stays unmarked.
 
@@ -112,6 +112,15 @@ Leniency state lives on `window.ignoreAccentsEnabled` and `window.ignoreApostrop
 
 Toggling the extension off disconnects the observer and calls `activeChallenge.cleanup()`; toggling on strips every `data-extension-processed` attribute and re-runs the observer, so already-rendered challenges get re-processed.
 
+## Verifying rare challenge types live
+
+Some types (tables, cloze) were never served in ~60 sampled sessions. Two harness techniques, both test-only and never shipped:
+
+- **Narrowing:** rewriting the session POST's `challengeTypes` makes the server build sessions only from the listed types, where the level's content allows them. This is useful for sampling which levels carry a type.
+- **Injection:** Duolingo's production renderers live in the web bundle (`8876-*.js`, look for `[me.Sm.TapCompleteTable]:{Container`). Wrapping `JSON.parse` to prepend a well-formed synthetic challenge to a real session renders it with Duolingo's own component and grades it client-side. That gives the true DOM to test against. The schema is read from the bundle (for tables: `displayTableTokens` rows × cells × tokens with `isBlank`/`damageStart`, `tableTokens` of `{value}` hint tokens, `headers`, `choices`). Missing hint tokens hang the session loader on a `.tts` read.
+
+Only answer what has been checked to be correct, because a wrong answer costs a heart on a real account. Quit (✕ → abort) rather than submit when unsure.
+
 ## Tests
 
 Jest with `testEnvironment: "jsdom"`, `clearMocks: true`, coverage always on (`coverageProvider: "v8"`). `jest.setup.cjs` assigns `jest-chrome` onto `global`, which is what makes `chrome.storage` / `chrome.runtime` available in tests, and adds a `chrome.action` stub because `jest-chrome` predates Manifest V3 and has none.
@@ -134,5 +143,7 @@ Tests mirror `src/` file-for-file and drive real DOM: they build Duolingo-shaped
 - Token `data-test` values carry the word as a prefix, as in `gato-challenge-tap-token`. That is why `WordBank` matches with `[data-test*='challenge-tap-token']` rather than an exact value, and why a token cannot be located by that attribute alone.
 - Japanese and Chinese annotate tokens with ruby readings; always read them through `readTokenText`.
 - Pair tiles are in DOM order prompt column first, answer column second. In `listenMatch` partners share a `data-test`; in `match` they do not (each tile's `data-test` is its own text). A tile holding several words moves the first word behind the marker (`sœur-challenge-tap-token une`), so never select tokens with `$=`.
+- Table and cloze challenges (`tapCompleteTable`, `tapClozeTable`, `tapCloze`) put a copy of **every** choice into **every** blank as a `challenge-tap-token` button, hidden with `visibility: hidden` except the selected one, and taps on hidden copies are ignored. `findAnswerButton` therefore skips invisible bubbles; never pick an answer bubble without that filter.
+- Released bubbles animate back into the bank and stay `aria-disabled` meanwhile, ignoring clicks. All bubble and submit clicks in `Challenge` go through `tap()`, which waits for a disabled target and keeps the click order. A match that is still the start of a longer available bubble ("a" → "are") is deliberately not claimed live.
 - Word-bank bubbles can hold several words (`tu as`, `une sœur`); `Challenge.splitWords` regroups typed words into those keys.
 - Japanese input uses an IME, where Space selects a candidate and Enter commits. `ExtensionEventManager` passes a keydown through untouched when `isComposing` is set or `keyCode` is 229, and defers live matching to `compositionend`. Do not add unconditional `preventDefault` back to those keys.
