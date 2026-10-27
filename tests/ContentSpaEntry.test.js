@@ -142,6 +142,20 @@ describe("entering a lesson without a page load", () => {
 		expect(div.getAttribute("data-extension-processed")).toBe("true");
 	});
 
+	test("converts a definition challenge once its radiogroup renders (issue #86)", async () => {
+		const div = createChallengeDiv("definition");
+		document.body.appendChild(div);
+		await tick();
+
+		expect(div.hasAttribute("data-extension-processed")).toBe(false);
+
+		div.appendChild(createChoiceGroup(["muy rápido", "muy bajo", "muy grande"]));
+		await tick();
+
+		expect(div.querySelector("textarea[data-extension='true']")).not.toBeNull();
+		expect(div.getAttribute("data-extension-processed")).toBe("true");
+	});
+
 	test("leaves a challenge that never gets a word bank alone, without marking it", async () => {
 		const div = createChallengeDiv("translate");
 		document.body.appendChild(div);
