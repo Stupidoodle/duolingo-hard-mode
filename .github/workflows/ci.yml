@@ -34,6 +34,12 @@ jobs:
       - name: Build production bundle
         run: bun run build
 
+      # Mozilla's addons-linter, the check AMO runs on every upload.
+      - name: Lint the Firefox package
+        run: |
+          bun scripts/build-firefox.js
+          bun x web-ext@10.7.0 lint --source-dir build/firefox --warnings-as-errors
+
       # Coverage is informational; a Codecov outage must not block merges.
       - name: Upload coverage report
         if: success()

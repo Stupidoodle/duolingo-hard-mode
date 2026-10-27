@@ -90,6 +90,16 @@ jobs:
           cp -r icons/* extension/icons/
           zip -r "extension.zip" extension
 
+      # AMO wants manifest.json at the root of the zip, and the human-readable
+      # source alongside any bundled code. The Firefox asset must not match
+      # publish-store's "extension.zip" pattern.
+      - name: Zip the Firefox package and the source
+        if: steps.version.outputs.new == 'true'
+        run: |
+          bun scripts/build-firefox.js
+          (cd build/firefox && zip -r "$GITHUB_WORKSPACE/extension-firefox.zip" .)
+          git archive --format=zip -o source-code.zip HEAD
+
       # A personal access token, so the release can trigger other workflows;
       # events raised with GITHUB_TOKEN do not.
       - name: Create the GitHub release
@@ -98,7 +108,7 @@ jobs:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "v$VERSION" extension.zip \
+          gh release create "v$VERSION" extension.zip extension-firefox.zip source-code.zip \
             --repo "$GITHUB_REPOSITORY" \
             --target "$SHA" \
             --title "Release v$VERSION" \
