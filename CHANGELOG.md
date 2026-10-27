@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.5.0...v1.6.0) (2026-10-27)
+
+
+### Features
+
+* add hard mode for dialogue ([4df5d12](https://github.com/Stupidoodle/duolingo-hard-mode/commit/4df5d123da186e7d8e55b84c0c3ca00d54aae600)), closes [#69](https://github.com/Stupidoodle/duolingo-hard-mode/issues/69)
+* match choices without their sentence punctuation ([c3465e6](https://github.com/Stupidoodle/duolingo-hard-mode/commit/c3465e6680ef113f6fbc943006f50afb79c8e4ad)), closes [#69](https://github.com/Stupidoodle/duolingo-hard-mode/issues/69)
+
+
+### Bug Fixes
+
+* fold the œ and æ ligatures when accents are ignored ([f1ecc05](https://github.com/Stupidoodle/duolingo-hard-mode/commit/f1ecc0573d9465723838c62bc00016524abd680b)), closes [#71](https://github.com/Stupidoodle/duolingo-hard-mode/issues/71)
+
 ## [1.5.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.4.2...v1.5.0) (2026-10-27)
 
 
