@@ -15,21 +15,28 @@ After:
 ![After](https://github.com/user-attachments/assets/a9bd57fa-5285-46d3-95e7-60df3ead4457)
 ## Features
 
-- Converts word bank challenges to text input fields
-- Supports various challenge types (translation, tap-to-complete)
-- Maintains Duolingo's original styling
-- Automatic focus management for seamless typing
+- Hides the word bank and the answer choices and makes you type instead, in:
+  - **Translations and fill-in-the-blanks** with a word bank (`translate`, `tapComplete`, `listenTap`), including bubbles that hold several words
+  - **Multiple choice** (`select`, `assist`, `gapFill`, `selectTranscription`)
+  - **Chat replies** (`dialogue`): type the sentence, punctuation optional
+  - **Matching pairs** (`match`, `listenMatch`): tap or hear a prompt, type its partner, press Enter
+- Optional leniency for accents (including `œ`/`æ`) and apostrophes
+- Japanese and Chinese: reads ruby/furigana correctly and works with IME input
+- Follows Duolingo's light and dark theme
+- Works straight away when you enter a lesson, no reload needed
+
+Challenges that already ask you to type (`listenComplete`, `completeReverseTranslation`, `listen`, `name`) are left as they are. Speaking challenges and `listenIsolation` (audio-only choices) cannot be typed.
 
 ## Installation
 
-1. **Chrome Web Store** (Coming Soon)
+1. **[Chrome Web Store](https://chromewebstore.google.com/detail/duolingo-hard-mode/jceggbkbebgncehlbekabbkfhdecfihh)**
 2. **Manual Installation**:
    - Go to the [Releases](https://github.com/Stupidoodle/duolingo-hard-mode/releases/latest) page
-   - Download the latest .zip file
-   - Extract the contents to a folder
+   - Download `extension.zip` from the latest release
+   - Extract it; it contains an `extension` folder
    - Open Chrome and go to `chrome://extensions`
    - Enable Developer Mode
-   - Click "Load unpacked" and select the extracted folder
+   - Click "Load unpacked" and select the `extension` folder
    - Open Duolingo and start learning!
 
 ## Known Issues ⚠️
@@ -42,30 +49,37 @@ After:
 
 ## Future Plans 🚧
 
-- Add hard mode support for ALL challenge types
-- (Improve stability for fill-in-the-blank exercises)
+- Hard mode for `tapCloze` and `tapCompleteTable`
 - Add answer validation hints
 - Implement smart autocomplete prevention
 - Add typing statistics and error tracking
 
 ## Building from Source
 
+This project uses [bun](https://bun.sh).
+
 1. Install dependencies:
    ```bash
-   npm install
+   bun install
    ```
 2. Build for development:
    ```bash
-   npm run build:dev
+   bun run build:dev
    ```
 3. Build for production:
    ```bash
-   npm run build
+   bun run build
    ```
 4. Watch for changes:
    ```bash
-   npm run watch
+   bun run watch
    ```
+5. Run the tests (use `bun run test`, not `bun test`, so jest runs):
+   ```bash
+   bun run test
+   ```
+
+The repository root is a loadable extension once built: "Load unpacked" on the repo root picks up `manifest.json` and `dist/`.
 
 ## Contributing
 
