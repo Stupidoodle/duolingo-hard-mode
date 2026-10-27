@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.6.0...v1.7.0) (2026-10-27)
+
+
+### Features
+
+* add hard mode for definition ([f844ff2](https://github.com/Stupidoodle/duolingo-hard-mode/commit/f844ff2cf15ab46b69696491b63b79b621613619)), closes [#86](https://github.com/Stupidoodle/duolingo-hard-mode/issues/86)
+* add hard mode for tapCloze and the table challenges ([f64b646](https://github.com/Stupidoodle/duolingo-hard-mode/commit/f64b64634c85da537c224c09e78b48d3e2a1f46b)), closes [#15](https://github.com/Stupidoodle/duolingo-hard-mode/issues/15) [#16](https://github.com/Stupidoodle/duolingo-hard-mode/issues/16)
+* **ci:** publish the newest release once the store review is over ([4c08961](https://github.com/Stupidoodle/duolingo-hard-mode/commit/4c08961aecf849b5ce6718270f548b3605b16977))
+
+
+### Bug Fixes
+
+* **ci:** never resubmit a release the store rejected ([96300fc](https://github.com/Stupidoodle/duolingo-hard-mode/commit/96300fc95dbd3103a7a7b95027330d11c64b5c3f))
+* **ci:** print the store's error body when an upload or publish fails ([b1bf711](https://github.com/Stupidoodle/duolingo-hard-mode/commit/b1bf711e0ca1d0897533f555ef9495b872dc1caf))
+* **ci:** treat a store review in progress as a wait, not a failure ([a51909b](https://github.com/Stupidoodle/duolingo-hard-mode/commit/a51909b34217100b011e0d3f5970b2f505aea99c))
+* release the visible bubble when backspacing in table challenges ([0bf868f](https://github.com/Stupidoodle/duolingo-hard-mode/commit/0bf868f8905f598780d2c4439fe405b00e13da4c)), closes [#93](https://github.com/Stupidoodle/duolingo-hard-mode/issues/93)
+* stop fast typing from dropping short words that start a longer one ([dd29741](https://github.com/Stupidoodle/duolingo-hard-mode/commit/dd2974186d20fe5aede272aec816a2129c5deaaf)), closes [#91](https://github.com/Stupidoodle/duolingo-hard-mode/issues/91)
+
 ## [1.6.0](https://github.com/Stupidoodle/duolingo-hard-mode/compare/v1.5.0...v1.6.0) (2026-10-27)
 
 
