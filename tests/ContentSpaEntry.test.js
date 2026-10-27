@@ -14,6 +14,7 @@
  * of enforceTyping then skips it forever.
  */
 import "../src/content.js";
+import { stopContentScript } from "./helpers/contentScript.js";
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 
@@ -96,6 +97,8 @@ function createPairTiles(keys) {
 }
 
 describe("entering a lesson without a page load", () => {
+	afterAll(stopContentScript);
+
 	beforeEach(() => {
 		document.body.innerHTML = "";
 		const submit = document.createElement("button");

@@ -122,6 +122,8 @@ Jest with `testEnvironment: "jsdom"`, `clearMocks: true`, coverage always on (`c
 
 Tests mirror `src/` file-for-file and drive real DOM: they build Duolingo-shaped markup with `document.body.innerHTML` in `beforeEach`, then assert against it. When adding a challenge type, copy the markup fixture pattern from `tests/ChallengeTapComplete.test.js`.
 
+**A test file that imports `src/content.js` must call `afterAll(stopContentScript)`** (`tests/helpers/contentScript.js`). The import starts a MutationObserver on `document.body`; without disconnecting it, jsdom's teardown fires it after the globals are gone and the run logs "Cannot log after tests are done" with a `document.querySelector` TypeError.
+
 `src/content.js` is the least-covered file — its top-level side effects (observer setup, storage reads) make it awkward to test, though `tests/ContentSpaEntry.test.js` does drive it through the real MutationObserver by appending DOM in stages.
 
 ## Known DOM-coupling risks
