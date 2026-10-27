@@ -81,7 +81,7 @@ Because everything keys off Duolingo's `data-test` attributes, **a Duolingo DOM 
 Challenge construction is deliberately split:
 
 - **Factory path** — `ChallengeFactory.create(type, challengeDiv, eventManager)`. Types are registered at the top of `content.js` (`translate`, `tapComplete`, `listenTap`). `ChallengeFactory.register` rejects any class that does not extend `Challenge`.
-- **Direct-construction path** — `gapFill`, `assist`, `select`, `selectTranscription` and `dialogue` bypass the factory and construct `ChallengeGapFill` directly, because it takes an extra `choiceDiv` argument (`div[aria-label="choice"][role="radiogroup"]`, which lives outside the challenge div) and **does not extend `Challenge`** — so it cannot be registered with the factory.
+- **Direct-construction path** — `gapFill`, `assist`, `select`, `selectTranscription`, `dialogue` and `definition` bypass the factory and construct `ChallengeGapFill` directly, because it takes an extra `choiceDiv` argument (`div[aria-label="choice"][role="radiogroup"]`, which lives outside the challenge div) and **does not extend `Challenge`** — so it cannot be registered with the factory.
 
 - **Pairs path** — `listenMatch` and `match` (`PAIR_TYPES`) construct the standalone `ChallengeMatch`, but only once `ChallengeMatch.isPairLayout` accepts the tiles; until then `buildChallenge` returns null and the container stays unmarked.
 

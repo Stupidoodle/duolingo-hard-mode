@@ -17,7 +17,7 @@ After:
 
 - Hides the word bank and the answer choices and makes you type instead, in:
   - **Translations and fill-in-the-blanks** with a word bank (`translate`, `tapComplete`, `listenTap`), including bubbles that hold several words
-  - **Multiple choice** (`select`, `assist`, `gapFill`, `selectTranscription`)
+  - **Multiple choice** (`select`, `assist`, `gapFill`, `selectTranscription`, `definition`)
   - **Chat replies** (`dialogue`): type the sentence, punctuation optional
   - **Matching pairs** (`match`, `listenMatch`): tap or hear a prompt, type its partner, press Enter
 - Optional leniency for accents (including `œ`/`æ`) and apostrophes
