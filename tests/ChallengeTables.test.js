@@ -8,6 +8,7 @@
  * tokens in order is therefore the whole hard mode.
  */
 import "../src/content.js";
+import { stopContentScript } from "./helpers/contentScript.js";
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 
@@ -57,6 +58,8 @@ function challenge(type, ...children) {
 }
 
 describe("issues #15/#16 — table and cloze challenges type into the word bank", () => {
+	afterAll(stopContentScript);
+
 	beforeEach(() => {
 		document.body.innerHTML = "";
 		const submit = document.createElement("button");
