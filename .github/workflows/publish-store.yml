@@ -59,18 +59,35 @@ jobs:
           echo "::add-mask::$ACCESS_TOKEN"
           echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> "$GITHUB_ENV"
 
+      - name: Show the item's store status
+        env:
+          PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          # Informational only: shows whether a submission is still in review,
+          # which is the usual reason an upload is refused.
+          curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
+            "https://chromewebstore.googleapis.com/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:fetchStatus" \
+            | jq '{publishedItemRevisionStatus, submittedItemRevisionStatus, lastAsyncUploadState, takenDown, warned}' || true
+
       - name: Upload the package
         env:
           PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
           EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
         run: |
-          RESPONSE=$(curl -s --fail-with-body -X POST \
+          # No --fail-with-body: under bash -e a failing command substitution
+          # aborts the step before the body is printed, which hides the store's
+          # reason. The status code is appended instead and checked below.
+          RESPONSE=$(curl -s -w '\n%{http_code}' -X POST \
             -H "Authorization: Bearer $ACCESS_TOKEN" \
             -H "Content-Type: application/zip" \
             --data-binary @extension.zip \
             "https://chromewebstore.googleapis.com/upload/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:upload")
+          HTTP_STATUS=${RESPONSE##*$'\n'}
+          RESPONSE=${RESPONSE%$'\n'*}
 
-          echo "$RESPONSE" | jq -c '{uploadState, itemError}' || echo "$RESPONSE"
+          echo "HTTP $HTTP_STATUS"
+          echo "$RESPONSE" | jq -c '{uploadState, itemError, error}' || echo "$RESPONSE"
           STATE=$(echo "$RESPONSE" | jq -r '.uploadState // empty')
 
           # v2 reports a finished upload as SUCCEEDED (v1.1 said SUCCESS), and a
@@ -96,11 +113,14 @@ jobs:
           PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
           EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
         run: |
-          RESPONSE=$(curl -s --fail-with-body -X POST \
+          RESPONSE=$(curl -s -w '\n%{http_code}' -X POST \
             -H "Authorization: Bearer $ACCESS_TOKEN" \
             -H "Content-Length: 0" \
             "https://chromewebstore.googleapis.com/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:publish")
+          HTTP_STATUS=${RESPONSE##*$'\n'}
+          RESPONSE=${RESPONSE%$'\n'*}
 
+          echo "HTTP $HTTP_STATUS"
           echo "$RESPONSE" | jq '.' || echo "$RESPONSE"
 
           # v2 answers with an ItemState. Anything that leaves the item submitted
