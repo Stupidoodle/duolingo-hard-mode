@@ -70,13 +70,26 @@ jobs:
             --data-binary @extension.zip \
             "https://chromewebstore.googleapis.com/upload/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:upload")
 
-          echo "$RESPONSE" | jq -r '{uploadState, itemError}' || echo "$RESPONSE"
-
+          echo "$RESPONSE" | jq -c '{uploadState, itemError}' || echo "$RESPONSE"
           STATE=$(echo "$RESPONSE" | jq -r '.uploadState // empty')
-          if [ "$STATE" != "SUCCESS" ]; then
-            echo "Upload did not succeed (uploadState=${STATE:-none})."
-            exit 1
+
+          # v2 reports a finished upload as SUCCEEDED (v1.1 said SUCCESS), and a
+          # large one can come back UPLOAD_IN_PROGRESS, which has to be polled.
+          if [ "$STATE" = "UPLOAD_IN_PROGRESS" ]; then
+            for _ in $(seq 1 30); do
+              sleep 5
+              STATE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
+                "https://chromewebstore.googleapis.com/v2/publishers/$PUBLISHER_ID/items/$EXTENSION_ID:fetchStatus" \
+                | jq -r '.lastAsyncUploadState // empty')
+              echo "upload state: $STATE"
+              [ "$STATE" != "UPLOAD_IN_PROGRESS" ] && break
+            done
           fi
+
+          case "$STATE" in
+            SUCCEEDED|SUCCESS) echo "Upload complete." ;;
+            *) echo "Upload did not succeed (uploadState=${STATE:-none})."; exit 1 ;;
+          esac
 
       - name: Publish the item
         env:
@@ -90,10 +103,14 @@ jobs:
 
           echo "$RESPONSE" | jq '.' || echo "$RESPONSE"
 
-          # A fresh submission reports OK; one awaiting Google's review reports
-          # ITEM_PENDING_REVIEW. Anything else is a failure.
-          if echo "$RESPONSE" | jq -e '(.status // [])[] | select(. != "OK" and . != "ITEM_PENDING_REVIEW")' > /dev/null; then
-            echo "Publish reported an unexpected status."
-            exit 1
-          fi
-          echo "Submitted. Google's review can take hours to days before the listing updates."
+          # v2 answers with an ItemState. Anything that leaves the item submitted
+          # or live is success; REJECTED and CANCELLED are not.
+          STATE=$(echo "$RESPONSE" | jq -r '.state // empty')
+          case "$STATE" in
+            PENDING_REVIEW|STAGED|PUBLISHED|PUBLISHED_TO_TESTERS)
+              echo "Publish state: $STATE"
+              echo "Google's review can take hours to days before the listing updates." ;;
+            *)
+              echo "Publish did not succeed (state=${STATE:-none})."
+              exit 1 ;;
+          esac
