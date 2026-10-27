@@ -127,7 +127,85 @@ export class Challenge{
 			}
 		}
 
-		return words;
+		return this.mergeMultiWordTokens(words);
+	}
+
+	/**
+	 * The most words any single bubble in the bank holds.
+	 * @returns {Number}
+	 */
+	longestTokenLength(){
+		let longest = 1;
+
+		for(const key of this.wordBank.wordMap.keys()){
+			longest = Math.max(longest, key.split(/\s+/).length);
+		}
+
+		return longest;
+	}
+
+	/**
+	 * Joins consecutive words that together spell one bubble.
+	 *
+	 * French banks hold bubbles such as "tu as" or "une sœur", so the typed words
+	 * have to be regrouped before they line up with the bank's keys. The longest
+	 * bubble wins, the same way a longer word takes over from a shorter one while
+	 * it is being typed.
+	 *
+	 * @param {String[]} words
+	 * @returns {String[]}
+	 */
+	mergeMultiWordTokens(words){
+		const longest = this.longestTokenLength();
+
+		if(longest < 2){
+			return words;
+		}
+
+		const merged = [];
+
+		for(let start = 0; start < words.length;){
+			let span = 1;
+
+			for(let length = Math.min(longest, words.length - start); length > 1; length--){
+				if(this.matchKey(this.wordBank.wordMap, words.slice(start, start + length).join(" "))){
+					span = length;
+					break;
+				}
+			}
+
+			merged.push(words.slice(start, start + span).join(" "));
+			start += span;
+		}
+
+		return merged;
+	}
+
+	/**
+	 * Whether the words at the end of the input are the opening words of a
+	 * multi-word bubble, so a space there continues the bubble instead of being
+	 * an unknown word.
+	 *
+	 * @returns {Boolean}
+	 */
+	isInsideMultiWordToken(){
+		const typed = this.elements.inputField.value.trim().split(/\s+/)
+			.filter(word => word.length > 0)
+			.map(word => this.normalizeWord(word));
+
+		for(const key of this.remainingChoices.wordMap.keys()){
+			const keyWords = key.split(/\s+/).map(word => this.normalizeWord(word));
+
+			for(let length = 1; length < keyWords.length && length <= typed.length; length++){
+				const tail = typed.slice(typed.length - length);
+
+				if(tail.every((word, index) => word === keyWords[index])){
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -399,7 +477,7 @@ export class Challenge{
 	handleSpace(){
 		// The word may already hold its bubble from live matching, in which case
 		// space only commits it.
-		if(this.isTrailingWordClaimed()){
+		if(this.isTrailingWordClaimed() || this.isInsideMultiWordToken()){
 			this.elements.inputField.value += " ";
 			return;
 		}
@@ -476,14 +554,21 @@ export class Challenge{
 	 * Handles enter key event
 	 */
 	handleEnter(){
-		let userInput = this.elements.inputField.value.trim().split(" ").pop().toLowerCase()
+		const words = this.splitWords(this.elements.inputField.value);
+		// Not Array.prototype.at: CI still builds on Node 14, which predates it.
+		const userInput = words.length > 0 ? words[words.length - 1] : "";
 
 		const matchingKey = this.matchKey(this.remainingChoices.wordMap, userInput);
 
 		if(matchingKey){
-			console.debug(`Selected ${matchingKey}`);
+			// Live matching has usually claimed it already; claiming again would
+			// take a second copy of a repeated word.
+			if(!this.isTrailingWordClaimed()){
+				console.debug(`Selected ${matchingKey}`);
 
-			this.remainingChoices.selectWord(matchingKey)?.click();
+				this.remainingChoices.selectWord(matchingKey)?.click();
+			}
+
 			this.handleSubmit();
 			this.cleanup();
 		}
