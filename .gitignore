@@ -139,3 +139,6 @@ dist
 login-debug-*.png
 .playwright-mcp/
 .chrome-profiles/
+
+# Generated Firefox package (bun run build:firefox)
+build/
