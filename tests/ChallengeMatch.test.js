@@ -97,6 +97,14 @@ describe("issue #66 — listenMatch hard mode", () => {
 			expect(eventManager.activeChallenges.get(challenge.challengeId)).toBe(challenge);
 		});
 
+		test("leaves a gap between the tiles and the textarea", () => {
+			const { input } = start();
+
+			// The tile column has no bottom margin of its own, so without one the
+			// textarea sits flush against the last prompt.
+			expect(input.style.marginTop).toBe("16px");
+		});
+
 		test("selects the first prompt of a fresh challenge", () => {
 			const { page } = start();
 
