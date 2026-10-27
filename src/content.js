@@ -36,6 +36,12 @@ eventManager.initGlobalKeyCapture();
 ChallengeFactory.register("translate", ChallengeTranslate);
 ChallengeFactory.register("tapComplete", ChallengeTapComplete);
 ChallengeFactory.register("listenTap", ChallengeTapComplete);
+// Blanks in a sentence or a conjugation table, filled from the same word bank
+// one tap per blank in order, so typing the tokens in order is all it takes.
+// tapClozeTable's tokens are word endings ("habl" + "o"), typed like words.
+ChallengeFactory.register("tapCloze", ChallengeTapComplete);
+ChallengeFactory.register("tapClozeTable", ChallengeTapComplete);
+ChallengeFactory.register("tapCompleteTable", ChallengeTapComplete);
 
 let extensionEnabled = true;
 let activeChallenge = null;
