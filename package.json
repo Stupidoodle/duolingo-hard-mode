@@ -25,7 +25,7 @@
 		"@types/jest": "^30",
 		"babel-jest": "^30",
 		"babel-loader": "^10.1.1",
-		"eslint": "^9.20.1",
+		"eslint": "^10.13.0",
 		"globals": "^17.13.0",
 		"html-webpack-plugin": "^5.6.8",
 		"jest": "^30",
