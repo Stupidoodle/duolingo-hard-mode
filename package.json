@@ -21,7 +21,7 @@
 	"packageManager": "bun@1.4.0",
 	"devDependencies": {
 		"@babel/core": "^7.26.9",
-		"@babel/preset-env": "^7.26.9",
+		"@babel/preset-env": "^8.0.7",
 		"@types/jest": "^30",
 		"babel-jest": "^30",
 		"babel-loader": "^10.1.1",
