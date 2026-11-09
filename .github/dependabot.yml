@@ -7,6 +7,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Supply chain: a release must be a week old before it is proposed.
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "ci"
     groups:
@@ -17,10 +20,16 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "chore"
       include: "scope"
     groups:
+      # @babel/core and @babel/preset-env only work on the same major, so
+      # one PR for all of Babel (two separate PRs were both red).
+      babel:
+        patterns: ["@babel/*"]
       dev-dependencies:
         dependency-type: "development"
         update-types: ["minor", "patch"]
