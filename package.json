@@ -26,13 +26,13 @@
 		"babel-jest": "^30",
 		"babel-loader": "^10.1.1",
 		"eslint": "^9.20.1",
-		"globals": "^17.13.0",
+		"globals": "^17.14.0",
 		"html-webpack-plugin": "^5.6.8",
 		"jest": "^30",
 		"jest-chrome": "^0.8.0",
 		"jest-environment-jsdom": "^30",
 		"standard-version": "^9.5.0",
 		"webpack": "^5.112.2",
-		"webpack-cli": "^7.2.3"
+		"webpack-cli": "^7.3.1"
 	}
 }
