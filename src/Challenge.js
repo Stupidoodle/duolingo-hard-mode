@@ -16,7 +16,7 @@ import{
 } from "./WordBank.js";
 
 import{
-	readTokenText
+	readTokenWord
 } from "./TokenText.js";
 
 import{
@@ -384,9 +384,7 @@ export class Challenge{
 			.filter(button => !wordBankDiv?.contains(button))
 			.filter(button => getComputedStyle(button).visibility !== "hidden")
 			.filter(button => {
-				const text = readTokenText(
-					button.querySelector("[data-test='challenge-tap-token-text']")
-				);
+				const text = readTokenWord(button);
 				return text !== "" && this.normalizeWord(text) === target;
 			});
 
