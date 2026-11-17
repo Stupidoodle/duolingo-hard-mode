@@ -7,8 +7,10 @@ import{
 } from "./ExtensionEventManager.js"
 
 import{
+	endsWithPunctuation,
 	getMatchingKey,
-	normalizeForMatch
+	normalizeForMatch,
+	trimPunctuation
 } from "./AccentUtils.js";
 
 import{
@@ -158,7 +160,8 @@ export class Challenge{
 			return [];
 		}
 
-		let words = trimmed.split(/\s+/);
+		// Punctuation typed on its own ("is it here ?") spells no bubble.
+		let words = trimmed.split(/\s+/).filter(word => trimPunctuation(word) !== "");
 
 		for(const word of [...words]){
 			if(word.includes("'")){
@@ -245,9 +248,16 @@ export class Challenge{
 	 * @returns {Boolean}
 	 */
 	isInsideMultiWordToken(){
-		const typed = this.elements.inputField.value.trim().split(/\s+/)
-			.filter(word => word.length > 0)
-			.map(word => this.normalizeWord(word));
+		const raw = this.elements.inputField.value.trim().split(/\s+/)
+			.filter(word => word.length > 0);
+
+		// "department," has ended its phrase, so it cannot be the start of
+		// "department store".
+		if(raw.length > 0 && endsWithPunctuation(raw[raw.length - 1])){
+			return false;
+		}
+
+		const typed = raw.map(word => this.normalizeWord(word));
 
 		for(const key of this.remainingChoices.wordMap.keys()){
 			const keyWords = key.split(/\s+/).map(word => this.normalizeWord(word));
@@ -306,7 +316,7 @@ export class Challenge{
 	 * @returns {String}
 	 */
 	normalizeWord(word){
-		return normalizeForMatch(word.trim(), {
+		return normalizeForMatch(trimPunctuation(word.trim()), {
 			ignoreAccents: window.ignoreAccentsEnabled,
 			ignoreApostrophes: window.ignoreApostrophesEnabled
 		});
@@ -319,12 +329,24 @@ export class Challenge{
 	 * @returns {String|null}
 	 */
 	matchKey(map, input){
-		return getMatchingKey(
+		const match = text => getMatchingKey(
 			map,
-			input,
+			text,
 			window.ignoreAccentsEnabled,
 			window.ignoreApostrophesEnabled
 		);
+
+		// Exact text first, so a bubble that holds punctuation itself ("mr.")
+		// still matches. Then without the punctuation typed around the word (#111).
+		const exact = match(input);
+
+		if(exact){
+			return exact;
+		}
+
+		const word = trimPunctuation(input);
+
+		return word !== "" && word !== input ? match(word) : null;
 	}
 
 	/**
@@ -612,6 +634,12 @@ export class Challenge{
 
 		if(!userInput)
 			return;
+
+		// Punctuation typed on its own is not a word to look up.
+		if(trimPunctuation(userInput) === ""){
+			this.elements.inputField.value += " ";
+			return;
+		}
 
 		if(userInput.includes("'")){
 			const apostropheIndex = userInput.indexOf("'");

@@ -52,6 +52,35 @@ export function normalizeSentence(str) {
 		.trim();
 }
 
+// Sentence punctuation that never belongs to a word-bank bubble: Latin, plus the
+// CJK marks Japanese is typed with. Apostrophes and hyphens are not in it,
+// because they belong to words ("o'clock", "est-ce").
+const PUNCTUATION = ".,!?¿¡;:…\"“”«»()、。！？「」『』（）";
+const EDGE_PUNCTUATION = new RegExp(`^[${PUNCTUATION}]+|[${PUNCTUATION}]+$`, "gu");
+const TRAILING_PUNCTUATION = new RegExp(`[${PUNCTUATION}]$`, "u");
+
+/**
+ * Trims sentence punctuation off both ends of a typed word, so "here?" and
+ * "¿dónde" match the bubbles "here" and "dónde". Punctuation inside a word
+ * ("3.5") is left alone.
+ *
+ * @param {string} str - A typed word.
+ * @returns {string} - The word without leading or trailing punctuation.
+ */
+export function trimPunctuation(str) {
+	return str.replace(EDGE_PUNCTUATION, "");
+}
+
+/**
+ * Whether a typed word ends in sentence punctuation, which closes the phrase.
+ *
+ * @param {string} str - A typed word.
+ * @returns {boolean}
+ */
+export function endsWithPunctuation(str) {
+	return TRAILING_PUNCTUATION.test(str);
+}
+
 /**
  * Lowercases a string and applies whichever normalizations are switched on.
  *
