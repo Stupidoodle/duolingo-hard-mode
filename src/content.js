@@ -30,6 +30,10 @@ import{
 	CONSTANTS
 } from "./constants.js";
 
+import{
+	challengeTypeOf
+} from "./ChallengeType.js";
+
 const eventManager = new ExtensionEventManager();
 eventManager.initGlobalKeyCapture();
 
@@ -113,7 +117,7 @@ function enforceTyping(){
 		return;
 	}
 
-	const challengeType = challengeDiv.getAttribute("data-test").replace("challenge challenge-", "")
+	const challengeType = challengeTypeOf(challengeDiv);
 
 	if(SKIPPED_TYPES.includes(challengeType)){
 		return;

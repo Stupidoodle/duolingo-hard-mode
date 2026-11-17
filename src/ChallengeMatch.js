@@ -18,6 +18,10 @@ import{
 	CONSTANTS
 } from "./constants.js";
 
+import{
+	challengeTypeOf
+} from "./ChallengeType.js";
+
 // `*=` rather than `$=`: a tile holding several words puts the first word
 // behind the marker, e.g. "sœur-challenge-tap-token une".
 const TILE_SELECTOR = "button[data-test*='challenge-tap-token']";
@@ -144,7 +148,7 @@ export class ChallengeMatch{
 		this.challengeDiv = challengeDiv;
 
 		/** @type {String} */
-		this.challengeType = challengeDiv.getAttribute("data-test").replace("challenge challenge-", "");
+		this.challengeType = challengeTypeOf(challengeDiv);
 
 		/** @type {String} */
 		this.challengeId = this.challengeType + "-" + Date.now();
