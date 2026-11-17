@@ -11,7 +11,8 @@ import{
 } from "./AccentUtils.js";
 
 import{
-	readTokenText
+	readTokenWord,
+	tokenTextElement
 } from "./TokenText.js";
 
 import{
@@ -21,7 +22,6 @@ import{
 // `*=` rather than `$=`: a tile holding several words puts the first word
 // behind the marker, e.g. "sœur-challenge-tap-token une".
 const TILE_SELECTOR = "button[data-test*='challenge-tap-token']";
-const TEXT_SELECTOR = "[data-test='challenge-tap-token-text']";
 
 /**
  * Every pair tile in DOM order: the prompt column first, then the answers.
@@ -46,9 +46,7 @@ function isOpen(tile){
  * @returns {String}
  */
 function tileText(tile){
-	const text = tile.querySelector(TEXT_SELECTOR);
-
-	return text ? readTokenText(text) : "";
+	return readTokenWord(tile);
 }
 
 /**
@@ -121,7 +119,7 @@ export class ChallengeMatch{
 			return false;
 		}
 
-		if(prompts.every(tile => !tile.querySelector(TEXT_SELECTOR))){
+		if(prompts.every(tile => !tokenTextElement(tile))){
 			return true;
 		}
 
