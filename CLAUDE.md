@@ -83,7 +83,7 @@ A Manifest V3 extension that rewrites Duolingo's click-the-word-bubbles challeng
 `src/content.js` runs a `MutationObserver` over `document.body`. On every mutation it calls `enforceTyping()`, which:
 
 1. Finds `div[data-test^='challenge challenge-']` — Duolingo's per-challenge container.
-2. Derives the challenge type by stripping the `challenge challenge-` prefix off `data-test`.
+2. Derives the challenge type with `challengeTypeOf` (`src/ChallengeType.js`): the `data-test` word that starts with `challenge-`. Never strip the prefix and take the rest, because other extensions add their own words to the same attribute. Duolingo Fast Mode appends `dfm-cid-<id>`, and with it every challenge was skipped as an unknown type (#108).
 3. Cleans up the previous `activeChallenge` if the div changed.
 4. Builds the challenge, calls `enforceTyping()`, and only then marks the div with `data-extension-processed="true"`.
 
