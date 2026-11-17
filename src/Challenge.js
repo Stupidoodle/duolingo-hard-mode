@@ -23,6 +23,10 @@ import{
 	CONSTANTS
 } from "./constants.js";
 
+import{
+	challengeTypeOf
+} from "./ChallengeType.js";
+
 // How long a tap waits for a bubble that is still disabled from Duolingo's
 // animation before clicking anyway, so a bubble that never re-enables cannot
 // stall every tap queued behind it.
@@ -47,7 +51,7 @@ export class Challenge{
 		this.challengeDiv = challengeDiv;
 
 		/** @type {String} */
-		this.challengeType = challengeDiv.getAttribute("data-test").replace("challenge challenge-", "");
+		this.challengeType = challengeTypeOf(challengeDiv);
 
 		/** @type {String} */
 		this.challengeId = this.challengeType + "-" + Date.now();
